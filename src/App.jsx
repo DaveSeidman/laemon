@@ -5,8 +5,8 @@ import './index.scss';
 
 function App() {
   return (
-    <Canvas camera={{ position: [0, 0, 2] }}>
-      <ambientLight intensity={6} />
+    <Canvas camera={{ position: [0, 0, 3] }}>
+      <ambientLight intensity={12} />
       <directionalLight position={[5, 5, 5]} intensity={6} />
       <OrangePuzzle />
     </Canvas>
