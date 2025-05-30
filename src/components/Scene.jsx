@@ -11,12 +11,7 @@ import texture5 from '../assets/images/5.png';
 import texture6 from '../assets/images/6.png';
 import texture7 from '../assets/images/7.png';
 import texture8 from '../assets/images/8.png';
-import { shuffle } from '../utils';
-
-const cubicBezierEasing = (t) => {
-  // t: 0 to 1, output value will be in the range of 0 to 1
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-};
+import { shuffle, cubicEase } from '../utils';
 
 export default function OrangePuzzle() {
   const yGroupRef = useRef();
@@ -55,7 +50,7 @@ export default function OrangePuzzle() {
         if (child.isMesh && child.material) {
           child.material = child.material.clone();
           child.material.map = textures[order[i]];
-          child.material.roughness = 0.6;
+          child.material.roughness = 0.4;
           child.material.metalness = 0.9;
           child.material.side = DoubleSide;
           child.castShadow = true;
@@ -79,8 +74,7 @@ export default function OrangePuzzle() {
     let t = (now - anim.start) / 500; // 500ms duration
     if (t > 1) t = 1;
 
-    // Apply the cubic bezier easing to t
-    const easedT = cubicBezierEasing(t);
+    const easedT = cubicEase(t);
 
     const offset = Math.sin(Math.PI * easedT) * anim.distance; // You can keep the sine or use the easedT directly
     anim.lastOffset = offset;
@@ -101,10 +95,9 @@ export default function OrangePuzzle() {
     }
   };
 
-
   const highlightAndTransform = (side, direction) => {
     const selected = [];
-    for (let i = 0; i < slices; i++) {
+    for (let i = 0; i < slices; i += 1) {
       const worldPos = new Vector3();
       meshRefs.current[i]?.getWorldPosition(worldPos);
       const isLeft = worldPos.x < 0;
@@ -208,7 +201,6 @@ export default function OrangePuzzle() {
     <group ref={yGroupRef}>
       <group ref={flipGroup}>
         <mesh>
-          {/* <boxGeometry></boxGeometry> */}
           <meshBasicMaterial wireframe></meshBasicMaterial>
         </mesh>
       </group>

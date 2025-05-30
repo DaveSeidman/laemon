@@ -1,7 +1,9 @@
 import React from 'react';
 import { Canvas } from '@react-three/fiber';
-import { EffectComposer, DepthOfField } from '@react-three/postprocessing';
+import { EffectComposer, DepthOfField, ChromaticAberration, Bloom } from '@react-three/postprocessing';
+import { BlendFunction } from 'postprocessing';
 import Scene from './components/Scene';
+import { Environment } from '@react-three/drei';
 import './index.scss';
 
 function App() {
@@ -13,16 +15,26 @@ function App() {
         fov: 50,
       }}
     >
-      <ambientLight intensity={3} />
-      <directionalLight position={[0, 4, 2]} intensity={3} castShadow />
+      <ambientLight intensity={5} />
+      <directionalLight position={[0, 4, 2]} intensity={4} castShadow />
+      <Environment preset="sunset" background />
 
       <Scene />
 
       <EffectComposer>
         <DepthOfField
-          focusDistance={1.5} // smaller = closer focus
-          focalLength={0.001} // smaller = shallower depth
-          bokehScale={4} // larger = stronger blur
+          focusDistance={1.5}
+          focalLength={0.001}
+          bokehScale={4}
+        />
+        <ChromaticAberration
+          blendFunction={BlendFunction.NORMAL}
+          offset={[0.0015, 0.0025]}
+        />
+        <Bloom
+          intensity={1.75}
+          luminanceThreshold={0.4}
+          luminanceSmoothing={0.1}
         />
       </EffectComposer>
     </Canvas>
