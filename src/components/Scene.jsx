@@ -13,10 +13,10 @@ import texture7 from '../assets/images/7.png';
 import texture8 from '../assets/images/8.png';
 import { shuffle, cubicEase } from '../utils';
 
-export default function OrangePuzzle() {
-  const yGroupRef = useRef();
+export default function Scene() {
+  const rotationGroup = useRef();
   const flipGroup = useRef();
-  const groupRef = useRef();
+  const tempGroup = useRef();
   const meshRefs = useRef([]);
 
   const slices = 8;
@@ -29,6 +29,31 @@ export default function OrangePuzzle() {
   const gltf = useGLTF(wedgeModel);
   const wedgeBase = gltf.scene?.children[0];
 
+  const checkIfSolved = () => {
+    const angles = meshRefs.current.map((mesh) => {
+      const v = new Vector3();
+      mesh.getWorldPosition(v);
+      return Math.atan2(v.z, v.x);
+    });
+
+    const textureIndices = meshRefs.current.map((mesh) => {
+      // console.log(mesh.children[0].material.map)
+    });
+
+    // Sort angles from smallest to largest to get angular order
+    const sortedIndices = angles
+      .map((angle, i) => ({ angle, index: i }))
+      .sort((a, b) => a.angle - b.angle)
+      .map(({ index }) => textureIndices[index]);
+
+    const expected = [...Array(slices).keys()];
+    const isSolved = expected.every((val, i) => sortedIndices[i] === val);
+
+    if (isSolved) {
+      console.log('🟢 Puzzle is solved!');
+    }
+  };
+
   useEffect(() => {
     textures.forEach((tex) => {
       tex.wrapS = RepeatWrapping;
@@ -39,6 +64,8 @@ export default function OrangePuzzle() {
 
   useEffect(() => {
     if (!wedgeBase) return;
+    tempGroup.current.clear(); // 👈🏽 this goes before you append new wedges
+
     for (let i = 0; i < slices; i++) {
       const phiStart = i * basePhiLength;
       const group = new Group();
@@ -60,18 +87,19 @@ export default function OrangePuzzle() {
 
       meshRefs.current[i] = wedgeClone;
       group.add(wedgeClone);
-      groupRef.current.add(group);
+      tempGroup.current.add(group);
     }
   }, [wedgeBase, textures]);
 
   const animRef = useRef(null);
   const animFrame = useRef();
 
-  const animateTransform = () => {
+  const animateTwist = () => {
+    console.log('animateTwist')
     const anim = animRef.current;
     if (!anim) return;
     const now = performance.now();
-    let t = (now - anim.start) / 500; // 500ms duration
+    let t = (now - anim.start) / 500;
     if (t > 1) t = 1;
 
     const easedT = cubicEase(t);
@@ -87,15 +115,17 @@ export default function OrangePuzzle() {
     anim.lastRot += deltaRot;
 
     if (easedT < 1) {
-      animFrame.current = requestAnimationFrame(animateTransform);
+      animFrame.current = requestAnimationFrame(animateTwist);
     } else {
-      anim.indices.forEach((i) => groupRef.current.attach(meshRefs.current[i]));
+      anim.indices.forEach((i) => tempGroup.current.attach(meshRefs.current[i]));
       flipGroup.current.rotation.set(0, 0, 0);
       animRef.current = null;
+      checkIfSolved();
     }
   };
 
-  const highlightAndTransform = (side, direction) => {
+  const setupTwist = (side, direction) => {
+    console.log('setupTwist')
     const selected = [];
     for (let i = 0; i < slices; i += 1) {
       const worldPos = new Vector3();
@@ -106,7 +136,7 @@ export default function OrangePuzzle() {
       }
     }
 
-    const rotY = yGroupRef.current.rotation.y;
+    const rotY = rotationGroup.current.rotation.y;
     const step = Math.PI / slices;
     const snappedY = (Math.round(rotY / step) * step);
     const worldDir = new Vector3(Math.cos(snappedY), 0, Math.sin(snappedY)).normalize();
@@ -130,7 +160,7 @@ export default function OrangePuzzle() {
       direction,
     };
     cancelAnimationFrame(animFrame.current);
-    animateTransform();
+    animateTwist();
   };
 
   const isDragging = useRef(false);
@@ -152,7 +182,8 @@ export default function OrangePuzzle() {
     const onMove = (e) => {
       if (!isDragging.current) return;
       const dx = (e.clientX - prevX.current) * 0.01;
-      yGroupRef.current.rotation.y += dx;
+      rotationGroup.current.rotation.y += dx;
+      console.log(rotationGroup.current.rotation)
       velocity.current = dx;
       prevX.current = e.clientX;
 
@@ -160,17 +191,19 @@ export default function OrangePuzzle() {
       if (!directionLogged.current && Math.abs(dy) > 40) {
         const side = dragStart.current.x > window.innerWidth / 2 ? 'RIGHT' : 'LEFT';
         const dir = dy < 0 ? 'UP' : 'DOWN';
-        highlightAndTransform(side, dir);
+        setupTwist(side, dir);
         directionLogged.current = true;
       }
     };
     const onUp = () => {
       isDragging.current = false;
       const decay = () => {
+
         velocity.current *= 0.95;
         if (Math.abs(velocity.current) > 0.0001) {
-          yGroupRef.current.rotation.y += velocity.current;
+          rotationGroup.current.rotation.y += velocity.current;
           frame.current = requestAnimationFrame(decay);
+          console.log(rotationGroup.current.rotation.y)
         }
       };
       frame.current = requestAnimationFrame(decay);
@@ -190,21 +223,14 @@ export default function OrangePuzzle() {
     };
   }, []);
 
-  useFrame(() => {
-    meshRefs.current.forEach((mesh) => {
-      const worldPos = new Vector3();
-      mesh.getWorldPosition(worldPos);
-    });
-  });
-
   return (
-    <group ref={yGroupRef}>
+    <group ref={rotationGroup}>
       <group ref={flipGroup}>
         <mesh>
           <meshBasicMaterial wireframe></meshBasicMaterial>
         </mesh>
       </group>
-      <group ref={groupRef} />
+      <group ref={tempGroup} />
     </group>
   );
 }
