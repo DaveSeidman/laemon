@@ -1,14 +1,14 @@
 import React from 'react';
 import { Canvas } from '@react-three/fiber';
-import OrangePuzzle from './components/OrangePuzzle';
+import Scene from './components/Scene';
 import './index.scss';
 
 function App() {
   return (
-    <Canvas camera={{ position: [0, 0, 3] }}>
-      <ambientLight intensity={12} />
-      <directionalLight position={[5, 5, 5]} intensity={6} />
-      <OrangePuzzle />
+    <Canvas shadows dpr={1} camera={{ position: [0, 0.5, 2], fov: 50 }}>
+      <ambientLight intensity={3} />
+      <directionalLight position={[0, 4, 2]} intensity={4} castShadow />
+      <Scene />
     </Canvas>
   );
 }

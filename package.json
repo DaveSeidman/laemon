@@ -1,5 +1,5 @@
 {
-  "name": "r3f-orange-puzzle",
+  "name": "laemon",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -17,6 +17,32 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^3.1.0",
-    "vite": "^4.3.8"
+    "vite": "^4.3.8",
+    "@react-three/eslint-plugin": "^0.1.1",
+    "eslint": "^8.57.1",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-react": "^7.37.4"
+  },
+  "eslintConfig": {
+    "extends": [
+      "airbnb",
+      "plugin:@react-three/recommended"
+    ],
+    "plugins": [
+      "@react-three"
+    ],
+    "env": {
+      "es6": true
+    },
+    "rules": {
+      "react/no-unknown-property": 0,
+      "no-param-reassign": 0,
+      "no-return-assign": 0,
+      "object-curly-newline": 0,
+      "no-console": 0,
+      "no-restricted-globals": 0,
+      "no-undef": 0
+    }
   }
 }
