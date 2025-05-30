@@ -6,3 +6,7 @@ export const shuffle = (array) => {
   }
   return result;
 };
+
+export const cubicEase = (t) =>
+  // t: 0 to 1, output value will be in the range of 0 to 1
+  (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);

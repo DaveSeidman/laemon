@@ -1,15 +1,22 @@
 import React, { useRef, useEffect } from 'react';
 import { useLoader, useFrame } from '@react-three/fiber';
-import {
-  TextureLoader,
-  RepeatWrapping,
-  DoubleSide,
-  ArrowHelper,
-  Vector3,
-  Group,
-} from 'three';
+import { TextureLoader, RepeatWrapping, DoubleSide, Vector3, Group, } from 'three';
 import { useGLTF } from '@react-three/drei';
-import wedgeModel from '../assets/models/wedge.glb';
+import wedgeModel from '../assets/models/wedge2.glb';
+import texture1 from '../assets/images/1.png';
+import texture2 from '../assets/images/2.png';
+import texture3 from '../assets/images/3.png';
+import texture4 from '../assets/images/4.png';
+import texture5 from '../assets/images/5.png';
+import texture6 from '../assets/images/6.png';
+import texture7 from '../assets/images/7.png';
+import texture8 from '../assets/images/8.png';
+import { shuffle } from '../utils';
+
+const cubicBezierEasing = (t) => {
+  // t: 0 to 1, output value will be in the range of 0 to 1
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+};
 
 export default function OrangePuzzle() {
   const yGroupRef = useRef();
@@ -19,10 +26,10 @@ export default function OrangePuzzle() {
 
   const slices = 8;
   const basePhiLength = (Math.PI * 2) / slices;
-  const gap = 0.01;
+  const gap = 0.05;
 
-  const textures = useLoader(TextureLoader, ['/textures/1.png', '/textures/2.png', '/textures/3.png', '/textures/4.png', '/textures/5.png', '/textures/6.png', '/textures/7.png', '/textures/8.png']);
-  const order = textures.map((_, i) => i);
+  const textures = useLoader(TextureLoader, [texture1, texture2, texture3, texture4, texture5, texture6, texture7, texture8]);
+  const order = shuffle(textures.map((_, i) => i));
 
   const gltf = useGLTF(wedgeModel);
   const wedgeBase = gltf.scene?.children[0];
@@ -44,7 +51,6 @@ export default function OrangePuzzle() {
 
       const wedgeClone = wedgeBase.clone(true);
       wedgeClone.position.set(0, 0, -gap);
-
       wedgeClone.traverse((child) => {
         if (child.isMesh && child.material) {
           child.material = child.material.clone();
@@ -70,20 +76,23 @@ export default function OrangePuzzle() {
     const anim = animRef.current;
     if (!anim) return;
     const now = performance.now();
-    let t = (now - anim.start) / 500;
+    let t = (now - anim.start) / 500; // 500ms duration
     if (t > 1) t = 1;
 
-    const offset = Math.sin(Math.PI * t) * anim.distance;
+    // Apply the cubic bezier easing to t
+    const easedT = cubicBezierEasing(t);
+
+    const offset = Math.sin(Math.PI * easedT) * anim.distance; // You can keep the sine or use the easedT directly
     anim.lastOffset = offset;
 
     const rotationAngle = Math.PI;
-    const deltaRot = t * rotationAngle - anim.lastRot;
+    const deltaRot = easedT * rotationAngle - anim.lastRot;
 
     const rotDir = anim.direction === 'UP' ? -1 : 1;
     flipGroup.current.rotateZ(rotDir * deltaRot);
     anim.lastRot += deltaRot;
 
-    if (t < 1) {
+    if (easedT < 1) {
       animFrame.current = requestAnimationFrame(animateTransform);
     } else {
       anim.indices.forEach((i) => groupRef.current.attach(meshRefs.current[i]));
@@ -199,7 +208,7 @@ export default function OrangePuzzle() {
     <group ref={yGroupRef}>
       <group ref={flipGroup}>
         <mesh>
-          <boxGeometry></boxGeometry>
+          {/* <boxGeometry></boxGeometry> */}
           <meshBasicMaterial wireframe></meshBasicMaterial>
         </mesh>
       </group>
