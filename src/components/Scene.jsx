@@ -1,8 +1,8 @@
 import React, { useRef, useEffect } from 'react';
 import { useLoader, useFrame } from '@react-three/fiber';
-import { TextureLoader, RepeatWrapping, DoubleSide, Vector3, Group, } from 'three';
+import { TextureLoader, MeshBasicMaterial, RepeatWrapping, DoubleSide, Vector3, Group, } from 'three';
 import { useGLTF } from '@react-three/drei';
-import wedgeModel from '../assets/models/wedge2.glb';
+import wedgeModel from '../assets/models/wedge3.glb';
 import texture1 from '../assets/images/1.png';
 import texture2 from '../assets/images/2.png';
 import texture3 from '../assets/images/3.png';
@@ -16,12 +16,14 @@ import { shuffle, cubicEase } from '../utils';
 export default function Scene() {
   const rotationGroup = useRef();
   const flipGroup = useRef();
-  const tempGroup = useRef();
+  const wedges = useRef();
   const meshRefs = useRef([]);
 
   const slices = 8;
+  const step = (Math.PI * 2) / slices;
+  const twistDuration = 1500;
   const basePhiLength = (Math.PI * 2) / slices;
-  const gap = 0.05;
+  const gap = 0.01;
 
   const textures = useLoader(TextureLoader, [texture1, texture2, texture3, texture4, texture5, texture6, texture7, texture8]);
   const order = shuffle(textures.map((_, i) => i));
@@ -64,7 +66,7 @@ export default function Scene() {
 
   useEffect(() => {
     if (!wedgeBase) return;
-    tempGroup.current.clear(); // 👈🏽 this goes before you append new wedges
+    wedges.current.clear();
 
     for (let i = 0; i < slices; i++) {
       const phiStart = i * basePhiLength;
@@ -87,126 +89,146 @@ export default function Scene() {
 
       meshRefs.current[i] = wedgeClone;
       group.add(wedgeClone);
-      tempGroup.current.add(group);
+      wedges.current.add(group);
     }
   }, [wedgeBase, textures]);
 
-  const animRef = useRef(null);
+  const twistAnimation = useRef(null);
   const animFrame = useRef();
 
   const animateTwist = () => {
-    console.log('animateTwist')
-    const anim = animRef.current;
-    if (!anim) return;
-    const now = performance.now();
-    let t = (now - anim.start) / 500;
+    if (!twistAnimation.current) return;
+    let t = (performance.now() - twistAnimation.current.start) / twistDuration;
     if (t > 1) t = 1;
 
     const easedT = cubicEase(t);
 
-    const offset = Math.sin(Math.PI * easedT) * anim.distance; // You can keep the sine or use the easedT directly
-    anim.lastOffset = offset;
+    const offset = Math.sin(Math.PI * easedT) * twistAnimation.current.distance; // You can keep the sine or use the easedT directly
+    twistAnimation.current.lastOffset = offset;
 
     const rotationAngle = Math.PI;
-    const deltaRot = easedT * rotationAngle - anim.lastRot;
+    const deltaRot = easedT * rotationAngle - twistAnimation.current.lastRot;
 
-    const rotDir = anim.direction === 'UP' ? -1 : 1;
+    const rotDir = twistAnimation.current.direction === 'UP' ? -1 : 1;
     flipGroup.current.rotateZ(rotDir * deltaRot);
-    anim.lastRot += deltaRot;
+    twistAnimation.current.lastRot += deltaRot;
 
     if (easedT < 1) {
       animFrame.current = requestAnimationFrame(animateTwist);
     } else {
-      anim.indices.forEach((i) => tempGroup.current.attach(meshRefs.current[i]));
+      twistAnimation.current.indices.forEach((i) => wedges.current.attach(meshRefs.current[i]));
       flipGroup.current.rotation.set(0, 0, 0);
-      animRef.current = null;
+      const snappedY = Math.round((rotationGroup.current.rotation.y - (step / 2)) / step) * step + (step / 2) + (Math.PI / 2)
+      flipGroup.current.rotation.y = -snappedY;
+      twistAnimation.current = null;
       checkIfSolved();
     }
   };
 
   const setupTwist = (side, direction) => {
-    console.log('setupTwist')
+
     const selected = [];
+    const redMaterial = new MeshBasicMaterial({ color: 0xff0000 });
+    const originalMaterials = new Map(); // Store original materials
+
+    // TODO #1: Visualize selected wedges with red temporarily
     for (let i = 0; i < slices; i += 1) {
       const worldPos = new Vector3();
       meshRefs.current[i]?.getWorldPosition(worldPos);
       const isLeft = worldPos.x < 0;
       if ((side === 'LEFT' && isLeft) || (side === 'RIGHT' && !isLeft)) {
         selected.push(i);
+
+        meshRefs.current[i].traverse((child) => {
+          if (child.isMesh) {
+            originalMaterials.set(child.uuid, child.material);
+            child.material = redMaterial;
+          }
+        });
       }
     }
-
-    const rotY = rotationGroup.current.rotation.y;
-    const step = Math.PI / slices;
-    const snappedY = (Math.round(rotY / step) * step);
-    const worldDir = new Vector3(Math.cos(snappedY), 0, Math.sin(snappedY)).normalize();
-
-    flipGroup.current.rotation.set(0, 0, 0);
-    flipGroup.current.quaternion.setFromUnitVectors(
-      new Vector3(0, 0, 1),
-      worldDir.clone().normalize()
-    );
-
     selected.forEach((i) => flipGroup.current.attach(meshRefs.current[i]));
 
+
+    setTimeout(() => {
+      selected.forEach((i) => {
+        meshRefs.current[i].traverse((child) => {
+          if (child.isMesh && originalMaterials.has(child.uuid)) {
+            child.material = originalMaterials.get(child.uuid);
+          }
+        });
+      });
+    }, twistDuration);
+
     const distance = side === 'LEFT' ? -0.5 : 0.5;
-    animRef.current = {
+    twistAnimation.current = {
       start: performance.now(),
       lastOffset: 0,
       distance,
       indices: selected,
-      worldDir,
+      // worldDir,
       lastRot: 0,
       direction,
     };
     cancelAnimationFrame(animFrame.current);
+    // setTimeout(() => {
     animateTwist();
+    // }, 500);
   };
 
   const isDragging = useRef(false);
   const prevX = useRef(0);
   const velocity = useRef(0);
-  const frame = useRef();
+  const spinFrame = useRef();
   const dragStart = useRef({ x: 0, y: 0 });
   const directionLogged = useRef(false);
 
+
   useEffect(() => {
     const onDown = (e) => {
+      if (twistAnimation.current) return;
       isDragging.current = true;
       prevX.current = e.clientX;
       velocity.current = 0;
       dragStart.current = { x: e.clientX, y: e.clientY };
       directionLogged.current = false;
-      cancelAnimationFrame(frame.current);
+      cancelAnimationFrame(spinFrame.current);
     };
     const onMove = (e) => {
+      if (twistAnimation.current) return;
       if (!isDragging.current) return;
       const dx = (e.clientX - prevX.current) * 0.01;
       rotationGroup.current.rotation.y += dx;
-      console.log(rotationGroup.current.rotation)
+
+      const snappedY = Math.round((rotationGroup.current.rotation.y - (step / 2)) / step) * step + (step / 2) + (Math.PI / 2)
+      flipGroup.current.rotation.y = -snappedY;
       velocity.current = dx;
       prevX.current = e.clientX;
 
       const dy = e.clientY - dragStart.current.y;
-      if (!directionLogged.current && Math.abs(dy) > 40) {
+
+      // pointer moved enough up or down, start a twist
+      if (!directionLogged.current && Math.abs(dy) > 50) {
         const side = dragStart.current.x > window.innerWidth / 2 ? 'RIGHT' : 'LEFT';
         const dir = dy < 0 ? 'UP' : 'DOWN';
+        console.log('twist', side, dir)
         setupTwist(side, dir);
         directionLogged.current = true;
       }
     };
     const onUp = () => {
       isDragging.current = false;
+      if (twistAnimation.current) return;
       const decay = () => {
-
         velocity.current *= 0.95;
         if (Math.abs(velocity.current) > 0.0001) {
           rotationGroup.current.rotation.y += velocity.current;
-          frame.current = requestAnimationFrame(decay);
-          console.log(rotationGroup.current.rotation.y)
+          spinFrame.current = requestAnimationFrame(decay);
+          const snappedY = Math.round((rotationGroup.current.rotation.y - (step / 2)) / step) * step + (step / 2) + (Math.PI / 2)
+          flipGroup.current.rotation.y = -snappedY;
         }
       };
-      frame.current = requestAnimationFrame(decay);
+      spinFrame.current = requestAnimationFrame(decay);
     };
 
     addEventListener('pointerdown', onDown);
@@ -218,7 +240,7 @@ export default function Scene() {
       removeEventListener('pointermove', onMove);
       removeEventListener('pointerup', onUp);
       removeEventListener('pointerleave', onUp);
-      cancelAnimationFrame(frame.current);
+      cancelAnimationFrame(spinFrame.current);
       cancelAnimationFrame(animFrame.current);
     };
   }, []);
@@ -227,10 +249,12 @@ export default function Scene() {
     <group ref={rotationGroup}>
       <group ref={flipGroup}>
         <mesh>
+          <boxGeometry args={[1.5, 2, 1.5]} />
           <meshBasicMaterial wireframe></meshBasicMaterial>
         </mesh>
+        <arrowHelper />
       </group>
-      <group ref={tempGroup} />
+      <group ref={wedges} />
     </group>
   );
 }

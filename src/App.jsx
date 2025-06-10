@@ -2,27 +2,27 @@ import React from 'react';
 import { Canvas } from '@react-three/fiber';
 import { EffectComposer, DepthOfField, ChromaticAberration, Bloom } from '@react-three/postprocessing';
 import { BlendFunction } from 'postprocessing';
-import Scene from './components/Scene';
 import { Environment } from '@react-three/drei';
+import Scene from './components/Scene';
 import './index.scss';
 
 function App() {
   return (
     <Canvas
-      shadows
+      // shadows
       camera={{
-        position: [0, 1, 2],
+        position: [0, 3, 0],
         fov: 50,
       }}
     >
       <ambientLight intensity={5} />
       <directionalLight position={[0, 4, 2]} intensity={4} castShadow />
-      <Environment preset="sunset" background blur={.1} />
+      {/* <Environment preset="sunset" background blur={0.1} /> */}
       <Scene />
 
-      <EffectComposer>
+      {/* <EffectComposer>
         <DepthOfField
-          focusDistance={.1}
+          focusDistance={0.1}
           focalLength={0.03}
           bokehScale={2}
         />
@@ -35,7 +35,7 @@ function App() {
           luminanceThreshold={0.4}
           luminanceSmoothing={0.1}
         />
-      </EffectComposer>
+      </EffectComposer> */}
     </Canvas>
   );
 }
