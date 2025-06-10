@@ -23,7 +23,7 @@ export default function Scene() {
   const step = (Math.PI * 2) / slices;
   const twistDuration = 1500;
   const basePhiLength = (Math.PI * 2) / slices;
-  const gap = 0.01;
+  const gap = 0.05;
 
   const textures = useLoader(TextureLoader, [texture1, texture2, texture3, texture4, texture5, texture6, texture7, texture8]);
   const order = shuffle(textures.map((_, i) => i));
@@ -39,7 +39,6 @@ export default function Scene() {
     });
 
     const textureIndices = meshRefs.current.map((mesh) => {
-      // console.log(mesh.children[0].material.map)
     });
 
     // Sort angles from smallest to largest to get angular order
@@ -79,8 +78,8 @@ export default function Scene() {
         if (child.isMesh && child.material) {
           child.material = child.material.clone();
           child.material.map = textures[order[i]];
-          child.material.roughness = 0.4;
-          child.material.metalness = 0.9;
+          child.material.roughness = 0.5;
+          child.material.metalness = 0.8;
           child.material.side = DoubleSide;
           child.castShadow = true;
           child.receiveShadow = true;
@@ -109,7 +108,7 @@ export default function Scene() {
     const rotationAngle = Math.PI;
     const deltaRot = easedT * rotationAngle - twistAnimation.current.lastRot;
 
-    const rotDir = twistAnimation.current.direction === 'UP' ? -1 : 1;
+    const rotDir = twistAnimation.current.direction === 'UP' ? 1 : -1;
     flipGroup.current.rotateZ(rotDir * deltaRot);
     twistAnimation.current.lastRot += deltaRot;
 
@@ -128,37 +127,16 @@ export default function Scene() {
   const setupTwist = (side, direction) => {
 
     const selected = [];
-    const redMaterial = new MeshBasicMaterial({ color: 0xff0000 });
-    const originalMaterials = new Map(); // Store original materials
-
-    // TODO #1: Visualize selected wedges with red temporarily
     for (let i = 0; i < slices; i += 1) {
       const worldPos = new Vector3();
       meshRefs.current[i]?.getWorldPosition(worldPos);
       const isLeft = worldPos.x < 0;
       if ((side === 'LEFT' && isLeft) || (side === 'RIGHT' && !isLeft)) {
         selected.push(i);
-
-        meshRefs.current[i].traverse((child) => {
-          if (child.isMesh) {
-            originalMaterials.set(child.uuid, child.material);
-            child.material = redMaterial;
-          }
-        });
       }
     }
     selected.forEach((i) => flipGroup.current.attach(meshRefs.current[i]));
 
-
-    setTimeout(() => {
-      selected.forEach((i) => {
-        meshRefs.current[i].traverse((child) => {
-          if (child.isMesh && originalMaterials.has(child.uuid)) {
-            child.material = originalMaterials.get(child.uuid);
-          }
-        });
-      });
-    }, twistDuration);
 
     const distance = side === 'LEFT' ? -0.5 : 0.5;
     twistAnimation.current = {
@@ -166,14 +144,11 @@ export default function Scene() {
       lastOffset: 0,
       distance,
       indices: selected,
-      // worldDir,
       lastRot: 0,
       direction,
     };
     cancelAnimationFrame(animFrame.current);
-    // setTimeout(() => {
     animateTwist();
-    // }, 500);
   };
 
   const isDragging = useRef(false);
@@ -247,13 +222,7 @@ export default function Scene() {
 
   return (
     <group ref={rotationGroup}>
-      <group ref={flipGroup}>
-        <mesh>
-          <boxGeometry args={[1.5, 2, 1.5]} />
-          <meshBasicMaterial wireframe></meshBasicMaterial>
-        </mesh>
-        <arrowHelper />
-      </group>
+      <group ref={flipGroup} />
       <group ref={wedges} />
     </group>
   );

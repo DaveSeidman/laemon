@@ -11,11 +11,11 @@ function App() {
     <Canvas
       // shadows
       camera={{
-        position: [0, 3, 0],
+        position: [0, 0, 3],
         fov: 50,
       }}
     >
-      <ambientLight intensity={5} />
+      <ambientLight intensity={15} />
       <directionalLight position={[0, 4, 2]} intensity={4} castShadow />
       {/* <Environment preset="sunset" background blur={0.1} /> */}
       <Scene />
