@@ -11,31 +11,31 @@ function App() {
     <Canvas
       // shadows
       camera={{
-        position: [0, 0, 3],
+        position: [0, 0.5, 3],
         fov: 50,
       }}
     >
-      <ambientLight intensity={15} />
-      <directionalLight position={[0, 4, 2]} intensity={4} castShadow />
-      {/* <Environment preset="sunset" background blur={0.1} /> */}
+      {/* <ambientLight intensity={5} /> */}
+      <directionalLight position={[0, 4, 2]} intensity={20} castShadow />
+      <Environment preset="sunset" background blur={0.1} intensity={2} />
       <Scene />
 
-      {/* <EffectComposer>
-        <DepthOfField
-          focusDistance={0.1}
-          focalLength={0.03}
-          bokehScale={2}
-        />
+      <EffectComposer>
+        {/* <DepthOfField
+          focusDistance={1.5}
+          focalLength={2.5}
+          bokehScale={4}
+        /> */}
         <ChromaticAberration
           blendFunction={BlendFunction.NORMAL}
-          offset={[0.0025, 0.0015]}
+          offset={[0.0015, 0.0015]}
         />
-        <Bloom
-          intensity={4.75}
+        {/* <Bloom
+          intensity={1.75}
           luminanceThreshold={0.4}
           luminanceSmoothing={0.1}
-        />
-      </EffectComposer> */}
+        /> */}
+      </EffectComposer>
     </Canvas>
   );
 }
