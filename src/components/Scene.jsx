@@ -1,17 +1,8 @@
 import React, { useRef, useEffect } from 'react';
-import { useLoader, useFrame } from '@react-three/fiber';
-import { TextureLoader, MeshBasicMaterial, RepeatWrapping, DoubleSide, Vector3, Group, } from 'three';
+import { Vector3, Group, } from 'three';
 import { useGLTF } from '@react-three/drei';
 import wedgeModel from '../assets/models/wedge4.glb';
-// import texture1 from '../assets/images/1.png';
-// import texture2 from '../assets/images/2.png';
-// import texture3 from '../assets/images/3.png';
-// import texture4 from '../assets/images/4.png';
-// import texture5 from '../assets/images/5.png';
-// import texture6 from '../assets/images/6.png';
-// import texture7 from '../assets/images/7.png';
-// import texture8 from '../assets/images/8.png';
-import { shuffle, cubicEase } from '../utils';
+import { cubicEase } from '../utils';
 
 export default function Scene() {
   const rotationGroup = useRef();
@@ -23,10 +14,7 @@ export default function Scene() {
   const step = (Math.PI * 2) / slices;
   const twistDuration = 900;
   const basePhiLength = (Math.PI * 2) / slices;
-  const gap = 0.05;
-
-  // const textures = useLoader(TextureLoader, [texture1, texture2, texture3, texture4, texture5, texture6, texture7, texture8]);
-  // const order = shuffle(textures.map((_, i) => i));
+  const gap = 0.01;
 
   const gltf = useGLTF(wedgeModel);
   const wedgeBase = gltf.scene?.children[0];
@@ -55,13 +43,6 @@ export default function Scene() {
     }
   };
 
-  // useEffect(() => {
-  //   textures.forEach((tex) => {
-  //     tex.wrapS = RepeatWrapping;
-  //     tex.wrapT = RepeatWrapping;
-  //     tex.flipY = false;
-  //   });
-  // }, [textures]);
 
   useEffect(() => {
     if (!wedgeBase) return;
@@ -76,11 +57,6 @@ export default function Scene() {
       wedgeClone.position.set(0, 0, -gap);
       wedgeClone.traverse((child) => {
         if (child.isMesh && child.material) {
-          // child.material = child.material.clone();
-          // child.material.map = textures[order[i]];
-          // child.material.roughness = 0.5;
-          // child.material.metalness = 0.8;
-          // child.material.side = DoubleSide;
           child.castShadow = true;
           child.receiveShadow = true;
         }
