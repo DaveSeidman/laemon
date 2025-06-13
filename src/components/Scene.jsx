@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
-import { Vector3, Group, } from 'three';
+import { Vector3, Group, DoubleSide, } from 'three';
 import { useGLTF } from '@react-three/drei';
-import wedgeModel from '../assets/models/wedge4.glb';
+import wedgeModel from '../assets/models/wedges.glb';
 import { cubicEase } from '../utils';
 
 export default function Scene() {
@@ -18,6 +18,7 @@ export default function Scene() {
 
   const gltf = useGLTF(wedgeModel);
   const wedgeBase = gltf.scene?.children[0];
+  // console.log({ gltf })
 
   const checkIfSolved = () => {
     const angles = meshRefs.current.map((mesh) => {
@@ -43,30 +44,57 @@ export default function Scene() {
     }
   };
 
-
   useEffect(() => {
-    if (!wedgeBase) return;
+    if (gltf.scene.children.length < slices) return;
     wedges.current.clear();
 
-    for (let i = 0; i < slices; i++) {
-      const phiStart = i * basePhiLength;
-      const group = new Group();
-      group.rotation.y = phiStart;
+    gltf.scene.children.forEach((originalWedge, index) => {
+      const wedge = originalWedge.clone(true);
 
-      const wedgeClone = wedgeBase.clone(true);
-      wedgeClone.position.set(0, 0, -gap);
-      wedgeClone.traverse((child) => {
-        if (child.isMesh && child.material) {
+      wedge.traverse((child) => {
+        if (child.isMesh) {
           child.castShadow = true;
           child.receiveShadow = true;
         }
       });
 
-      meshRefs.current[i] = wedgeClone;
-      group.add(wedgeClone);
-      wedges.current.add(group);
-    }
-  }, [wedgeBase]);
+      const offsetContainer = new Group();
+      offsetContainer.position.set(0, 0, -gap);
+      offsetContainer.add(wedge);
+
+      const rotationContainer = new Group();
+      rotationContainer.rotation.y = index * basePhiLength;
+      rotationContainer.add(offsetContainer);
+
+      wedges.current.add(rotationContainer);
+      meshRefs.current[index] = wedge;
+    });
+  }, [gltf]);
+
+  // useEffect(() => {
+  //   if (!wedgeBase) return;
+  //   wedges.current.clear();
+
+  //   for (let i = 0; i < slices; i += 1) {
+  //     const phiStart = i * basePhiLength;
+  //     const group = new Group();
+  //     group.rotation.y = phiStart;
+
+  //     const wedgeClone = wedgeBase.clone(true);
+  //     wedgeClone.position.set(0, 0, -gap);
+  //     wedgeClone.traverse((child) => {
+  //       if (child.isMesh && child.material) {
+  //         child.castShadow = true;
+  //         child.receiveShadow = true;
+  //         // child.material.side = DoubleSide;
+  //       }
+  //     });
+
+  //     meshRefs.current[i] = wedgeClone;
+  //     group.add(wedgeClone);
+  //     wedges.current.add(group);
+  //   }
+  // }, [wedgeBase]);
 
   const twistAnimation = useRef(null);
   const animFrame = useRef();

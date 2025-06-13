@@ -2,7 +2,7 @@ import React from 'react';
 import { Canvas } from '@react-three/fiber';
 import { EffectComposer, ChromaticAberration, Bloom } from '@react-three/postprocessing';
 import { BlendFunction } from 'postprocessing';
-import { Environment, ContactShadows, PerspectiveCamera } from '@react-three/drei';
+import { Environment, ContactShadows, PerspectiveCamera, Float } from '@react-three/drei';
 import Scene from './components/Scene';
 import './index.scss';
 
@@ -15,13 +15,25 @@ function App() {
         rotation={[-0.2, 0, 0]}
         fov={25}
       />
-      <Scene />
+      <Float
+        speed={2}
+        rotationIntensity={0.1}
+        floatIntensity={1}
+        floatingRange={[-0.1, 0.1]}
+      >
+        <Scene />
+      </Float>
       <directionalLight
         position={[2, 4, -2]}
         intensity={6}
         castShadow
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
+      />
+      <pointLight
+        position={[-0.75, 1, -1.5]}
+        intensity={4}
+        castShadow
       />
       <Environment preset="sunset" background blur={0.05} intensity={2} />
       <ContactShadows
