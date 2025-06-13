@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { Vector3, Group, DoubleSide, } from 'three';
 import { useGLTF } from '@react-three/drei';
 import wedgeModel from '../assets/models/wedges.glb';
-import { cubicEase } from '../utils';
+import { cubicEase, shuffle } from '../utils';
 
 export default function Scene() {
   const rotationGroup = useRef();
@@ -18,38 +18,62 @@ export default function Scene() {
 
   const gltf = useGLTF(wedgeModel);
   const wedgeBase = gltf.scene?.children[0];
-  // console.log({ gltf })
 
   const checkIfSolved = () => {
-    const angles = meshRefs.current.map((mesh) => {
-      const v = new Vector3();
-      mesh.getWorldPosition(v);
-      return Math.atan2(v.z, v.x);
-    });
+    const groupYaw = rotationGroup.current.rotation.y % (2 * Math.PI)
 
-    const textureIndices = meshRefs.current.map((mesh) => {
-    });
+    const entries = meshRefs.current.map((mesh) => {
+      // 1) world pos  
+      const v = new Vector3()
+      mesh.getWorldPosition(v)
 
-    // Sort angles from smallest to largest to get angular order
-    const sortedIndices = angles
-      .map((angle, i) => ({ angle, index: i }))
-      .sort((a, b) => a.angle - b.angle)
-      .map(({ index }) => textureIndices[index]);
+      // 2) raw angle from –π→+π  
+      let raw = Math.atan2(v.z, v.x)
 
-    const expected = [...Array(slices).keys()];
-    const isSolved = expected.every((val, i) => sortedIndices[i] === val);
+      // 3) shift so wedge 0 sits at raw=0 (they start on –Z)  
+      raw += Math.PI / 2
 
-    if (isSolved) {
-      console.log('🟢 Puzzle is solved!');
+      // 4) normalize to 0→2π  
+      let norm = (raw % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI)
+
+      // 5) remove the ring’s rotation  
+      norm = norm - groupYaw
+      norm = (norm % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI)
+
+      return {
+        relAngle: norm,
+        originalIndex: mesh.userData.originalIndex,
+      }
+    })
+
+    // sort by that corrected angle…
+    const ordered = entries
+      .slice()
+      .sort((a, b) => a.relAngle - b.relAngle)
+      .map((e) => e.originalIndex)
+
+    const expected = [...Array(slices).keys()]
+    const solved = expected.every((v, i) => v === ordered[i])
+
+    if (solved) {
+      console.log('🟢 Puzzle is solved!')
+    } else {
+      console.log('🔴 Not solved, current order:', ordered.map(i => i + 1))
     }
-  };
+  }
+
 
   useEffect(() => {
-    if (gltf.scene.children.length < slices) return;
-    wedges.current.clear();
 
-    gltf.scene.children.forEach((originalWedge, index) => {
-      const wedge = originalWedge.clone(true);
+    if (gltf.scene.children.length < slices) return;
+    const sortedChildren = gltf.scene.children.sort((a, b) => a.name > b.name ? 1 : -1)
+    console.log(sortedChildren)
+    wedges.current.clear();
+    const shuffledIndices = shuffle([0, 1, 2, 3, 4, 5, 6, 7])
+
+    shuffledIndices.forEach((shuffledIndex, index) => {
+      const wedge = sortedChildren[index].clone(true);
+      wedge.userData.originalIndex = index;
 
       wedge.traverse((child) => {
         if (child.isMesh) {
@@ -63,38 +87,14 @@ export default function Scene() {
       offsetContainer.add(wedge);
 
       const rotationContainer = new Group();
-      rotationContainer.rotation.y = index * basePhiLength;
+      rotationContainer.rotation.y = shuffledIndex * basePhiLength;
       rotationContainer.add(offsetContainer);
 
       wedges.current.add(rotationContainer);
-      meshRefs.current[index] = wedge;
+      meshRefs.current[shuffledIndices[index]] = wedge;
     });
   }, [gltf]);
 
-  // useEffect(() => {
-  //   if (!wedgeBase) return;
-  //   wedges.current.clear();
-
-  //   for (let i = 0; i < slices; i += 1) {
-  //     const phiStart = i * basePhiLength;
-  //     const group = new Group();
-  //     group.rotation.y = phiStart;
-
-  //     const wedgeClone = wedgeBase.clone(true);
-  //     wedgeClone.position.set(0, 0, -gap);
-  //     wedgeClone.traverse((child) => {
-  //       if (child.isMesh && child.material) {
-  //         child.castShadow = true;
-  //         child.receiveShadow = true;
-  //         // child.material.side = DoubleSide;
-  //       }
-  //     });
-
-  //     meshRefs.current[i] = wedgeClone;
-  //     group.add(wedgeClone);
-  //     wedges.current.add(group);
-  //   }
-  // }, [wedgeBase]);
 
   const twistAnimation = useRef(null);
   const animFrame = useRef();
@@ -190,7 +190,6 @@ export default function Scene() {
       if (!directionLogged.current && Math.abs(dy) > 50) {
         const side = dragStart.current.x > window.innerWidth / 2 ? 'RIGHT' : 'LEFT';
         const dir = dy < 0 ? 'UP' : 'DOWN';
-        console.log('twist', side, dir)
         setupTwist(side, dir);
         directionLogged.current = true;
       }

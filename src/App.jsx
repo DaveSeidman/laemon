@@ -17,7 +17,7 @@ function App() {
       />
       <Float
         speed={2}
-        rotationIntensity={0.1}
+        rotationIntensity={0.01}
         floatIntensity={1}
         floatingRange={[-0.1, 0.1]}
       >
@@ -32,24 +32,24 @@ function App() {
       />
       <pointLight
         position={[-0.75, 1, -1.5]}
-        intensity={4}
+        intensity={6}
         castShadow
       />
-      <Environment preset="sunset" background blur={0.05} intensity={2} />
+      <Environment preset="sunset" blur={0.05} intensity={2} />
       <ContactShadows
-        opacity={1}
-        scale={10}
-        blur={1}
-        far={3}
+        opacity={0.2}
+        scale={20}
+        blur={0.1}
+        far={10}
         resolution={256}
         color="#000000"
         position={[0, -1.33, 0]}
       />
       <EffectComposer>
-        <ChromaticAberration
+        {/* <ChromaticAberration
           blendFunction={BlendFunction.NORMAL}
           offset={[0.0015, 0.0015]}
-        />
+        /> */}
         <Bloom
           intensity={1.5}
           luminanceThreshold={0.2}
