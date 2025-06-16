@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Vector3, Group, DoubleSide, } from 'three';
 import { useGLTF } from '@react-three/drei';
-import wedgeModel from '../assets/models/wedges.glb';
+import wedgeModel from '../assets/models/wedges-compressed.glb';
 import { cubicEase, shuffle } from '../utils';
 
 export default function Scene() {
