@@ -47,7 +47,7 @@ function App() {
         />
         <Float
           speed={2}
-          rotationIntensity={0.1}
+          rotationIntensity={1}
           floatIntensity={1}
           floatingRange={[-0.1, 0.1]}
         >
@@ -55,7 +55,7 @@ function App() {
         </Float>
         <directionalLight
           position={[2, 4, -2]}
-          intensity={6}
+          intensity={5}
           castShadow
           shadow-mapSize-width={1024}
           shadow-mapSize-height={1024}

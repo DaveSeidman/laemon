@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Vector3, Group, DoubleSide, } from 'three';
 import { useGLTF } from '@react-three/drei';
-import wedgeModel from '../assets/models/wedges-compressed.glb';
+import wedgeModel from '../assets/models/wedges.glb';
 import { cubicEase, shuffle } from '../utils';
 
 export default function Scene() {
@@ -137,6 +137,9 @@ export default function Scene() {
     for (let i = 0; i < slices; i += 1) {
       const worldPos = new Vector3();
       meshRefs.current[i]?.getWorldPosition(worldPos);
+      // invert only the Float’s transform (its group is rotationGroup.parent)
+      const floatGroup = rotationGroup.current.parent;
+      floatGroup.worldToLocal(worldPos);
       const isLeft = worldPos.x < 0;
       if ((side === 'LEFT' && isLeft) || (side === 'RIGHT' && !isLeft)) {
         selected.push(i);
