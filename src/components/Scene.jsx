@@ -20,58 +20,61 @@ export default function Scene() {
   const wedgeBase = gltf.scene?.children[0];
 
   const checkIfSolved = () => {
-    const groupYaw = rotationGroup.current.rotation.y % (2 * Math.PI)
+    // 1) Get the puzzle’s current yaw
+    const yaw = rotationGroup.current.rotation.y % (2 * Math.PI);
 
-    const entries = meshRefs.current.map((mesh) => {
-      // 1) world pos  
-      const v = new Vector3()
-      mesh.getWorldPosition(v)
+    // 2) Build an array of { originalIndex, relAngle }
+    const entries = meshRefs.current.map(mesh => {
+      const v = new Vector3();
+      mesh.getWorldPosition(v);
 
-      // 2) raw angle from –π→+π  
-      let raw = Math.atan2(v.z, v.x)
+      // raw angle around Y, rebased so –Z → 0, in [0,2π)
+      let raw = Math.atan2(v.z, v.x);
+      raw = (raw + Math.PI / 2 + 2 * Math.PI) % (2 * Math.PI);
 
-      // 3) shift so wedge 0 sits at raw=0 (they start on –Z)  
-      raw += Math.PI / 2
-
-      // 4) normalize to 0→2π  
-      let norm = (raw % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI)
-
-      // 5) remove the ring’s rotation  
-      norm = norm - groupYaw
-      norm = (norm % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI)
+      // subtract the ring’s yaw and normalize back into [0,2π)
+      const rel = (raw - yaw + 2 * Math.PI) % (2 * Math.PI);
 
       return {
-        relAngle: norm,
         originalIndex: mesh.userData.originalIndex,
-      }
-    })
+        relAngle: rel
+      };
+    });
 
-    // sort by that corrected angle…
+    // 3) Sort by that relAngle and pull out the original indices
     const ordered = entries
       .slice()
       .sort((a, b) => a.relAngle - b.relAngle)
-      .map((e) => e.originalIndex)
+      .map(e => e.originalIndex);
 
-    const expected = [...Array(slices).keys()]
-    const solved = expected.every((v, i) => v === ordered[i])
+    // 4) Compute “circular diffs” between consecutive entries, mod slices
+    const diffs = ordered
+      .slice(1)
+      .map((v, i) => (v - ordered[i] + slices) % slices);
 
-    if (solved) {
-      console.log('🟢 Puzzle is solved!')
+    // 5) Check for a constant +1 (forward) or (slices-1) (backward) step
+    const isForward = diffs.every(d => d === 1);
+    const isBackward = diffs.every(d => d === slices - 1);
+
+    if (isForward || isBackward) {
+      console.log('🟢 Puzzle is solved!');
     } else {
-      console.log('🔴 Not solved, current order:', ordered.map(i => i + 1))
+      console.log('🔴 Not solved, current order:', ordered);
     }
-  }
+  };
 
 
   useEffect(() => {
 
     if (gltf.scene.children.length < slices) return;
     const sortedChildren = gltf.scene.children.sort((a, b) => a.name > b.name ? 1 : -1)
-    console.log(sortedChildren)
-    wedges.current.clear();
-    const shuffledIndices = shuffle([0, 1, 2, 3, 4, 5, 6, 7])
 
-    shuffledIndices.forEach((shuffledIndex, index) => {
+    wedges.current.clear();
+    const orderedIndices = [0, 1, 2, 3, 4, 5, 6, 7];
+    // const shuffledIndices = shuffle(orderedIndices)
+
+    // shuffledIndices.forEach((shuffledIndex, index) => {
+    orderedIndices.forEach((shuffledIndex, index) => {
       const wedge = sortedChildren[index].clone(true);
       wedge.userData.originalIndex = index;
 
@@ -91,7 +94,7 @@ export default function Scene() {
       rotationContainer.add(offsetContainer);
 
       wedges.current.add(rotationContainer);
-      meshRefs.current[shuffledIndices[index]] = wedge;
+      meshRefs.current[orderedIndices[index]] = wedge;
     });
   }, [gltf]);
 
@@ -156,6 +159,7 @@ export default function Scene() {
   };
 
   const isDragging = useRef(false);
+  const dragged = useRef(false);
   const prevX = useRef(0);
   const velocity = useRef(0);
   const spinFrame = useRef();
@@ -164,7 +168,12 @@ export default function Scene() {
 
 
   useEffect(() => {
+    const onClick = (e) => {
+      if (!dragged.current) velocity.current = e.clientX / innerWidth < .5 ? .05 : -.05;
+    }
+
     const onDown = (e) => {
+      dragged.current = false;
       if (twistAnimation.current) return;
       isDragging.current = true;
       prevX.current = e.clientX;
@@ -174,6 +183,7 @@ export default function Scene() {
       cancelAnimationFrame(spinFrame.current);
     };
     const onMove = (e) => {
+      dragged.current = true;
       if (twistAnimation.current) return;
       if (!isDragging.current) return;
       const dx = (e.clientX - prevX.current) * 0.01;
@@ -208,12 +218,13 @@ export default function Scene() {
       };
       spinFrame.current = requestAnimationFrame(decay);
     };
-
+    addEventListener('click', onClick);
     addEventListener('pointerdown', onDown);
     addEventListener('pointermove', onMove);
     addEventListener('pointerup', onUp);
     addEventListener('pointerleave', onUp);
     return () => {
+      removeEventListener('click', onClick);
       removeEventListener('pointerdown', onDown);
       removeEventListener('pointermove', onMove);
       removeEventListener('pointerup', onUp);

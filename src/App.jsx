@@ -15,14 +15,14 @@ function App() {
         rotation={[-0.2, 0, 0]}
         fov={25}
       />
-      <Float
+      {/* <Float
         speed={2}
         rotationIntensity={0.01}
         floatIntensity={1}
         floatingRange={[-0.1, 0.1]}
-      >
-        <Scene />
-      </Float>
+      > */}
+      <Scene />
+      {/* </Float> */}
       <directionalLight
         position={[2, 4, -2]}
         intensity={6}
