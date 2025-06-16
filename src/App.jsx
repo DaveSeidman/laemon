@@ -8,7 +8,7 @@ import Scene from './components/Scene';
 import './index.scss';
 
 function App() {
-  const { envPreset, envIntensity } = useControls({
+  const { envPreset, envIntensity, envRotation } = useControls({
     envPreset: {
       options: [
         'apartment',
@@ -22,12 +22,17 @@ function App() {
         'sunset',
         'warehouse',
       ],
-      value: 'sunset',
+      value: 'city',
     },
     envIntensity: {
       min: 0,
       max: 100,
       value: 2,
+    },
+    envRotation: {
+      min: 0,
+      max: Math.PI * 2,
+      value: Math.PI,
     },
   });
 
@@ -64,6 +69,7 @@ function App() {
           preset={envPreset}
           blur={0.05}
           intensity={envIntensity}
+          environmentRotation={[0, envRotation, 0]}
         />
         <mesh position={[0, -1.25, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[20, 20]} />
@@ -74,7 +80,7 @@ function App() {
             mixStrength={20}
             depthScale={0.5}
             minDepthThreshold={0.1}
-            color="#666666"
+            color="#555555"
             metalness={0.5}
             roughness={0.9}
           />
@@ -90,9 +96,9 @@ function App() {
         /> */}
         <EffectComposer>
           {/* <ChromaticAberration
-          blendFunction={BlendFunction.NORMAL}
-          offset={[0.0015, 0.0015]}
-        /> */}
+            blendFunction={BlendFunction.NORMAL}
+            offset={[0.0015, 0.0015]}
+          /> */}
           <Bloom
             intensity={1.5}
             luminanceThreshold={0.2}
