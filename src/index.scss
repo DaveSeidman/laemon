@@ -13,3 +13,13 @@ canvas {
   width: 100vw;
   height: 100vh;
 }
+
+.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.ui {
+  position: absolute;
+  inset: 0;
+}

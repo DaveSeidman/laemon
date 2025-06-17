@@ -1,23 +1,29 @@
 import React, { useRef, useEffect } from 'react';
 import { Vector3, Group, DoubleSide, } from 'three';
 import { useGLTF } from '@react-three/drei';
-import wedgeModel from '../assets/models/wedges.glb';
-import { cubicEase, shuffle } from '../utils';
+import wedgeModel from '../../assets/models/wedges.glb';
+import { cubicEase, shuffle } from '../../utils';
+import './index.scss';
 
-export default function Scene() {
+export default function Scene({ slices, twist }) {
   const rotationGroup = useRef();
   const flipGroup = useRef();
   const wedges = useRef();
   const meshRefs = useRef([]);
 
-  const slices = 8;
   const step = (Math.PI * 2) / slices;
   const twistDuration = 900;
   const basePhiLength = (Math.PI * 2) / slices;
   const gap = 0.01;
 
   const gltf = useGLTF(wedgeModel);
-  const wedgeBase = gltf.scene?.children[0];
+  const isDragging = useRef(false);
+  const dragged = useRef(false);
+  const prevX = useRef(0);
+  const velocity = useRef(0);
+  const spinFrame = useRef();
+  const dragStart = useRef({ x: 0, y: 0 });
+  const directionLogged = useRef(false);
 
   const checkIfSolved = () => {
     // 1) Get the puzzle’s current yaw
@@ -65,7 +71,6 @@ export default function Scene() {
 
 
   useEffect(() => {
-
     if (gltf.scene.children.length < slices) return;
     const sortedChildren = gltf.scene.children.sort((a, b) => a.name > b.name ? 1 : -1)
 
@@ -131,8 +136,7 @@ export default function Scene() {
     }
   };
 
-  const setupTwist = (side, direction) => {
-
+  const userTwist = (side, direction) => {
     const selected = [];
     for (let i = 0; i < slices; i += 1) {
       const worldPos = new Vector3();
@@ -147,7 +151,6 @@ export default function Scene() {
     }
     selected.forEach((i) => flipGroup.current.attach(meshRefs.current[i]));
 
-
     const distance = side === 'LEFT' ? -0.5 : 0.5;
     twistAnimation.current = {
       start: performance.now(),
@@ -161,13 +164,10 @@ export default function Scene() {
     animateTwist();
   };
 
-  const isDragging = useRef(false);
-  const dragged = useRef(false);
-  const prevX = useRef(0);
-  const velocity = useRef(0);
-  const spinFrame = useRef();
-  const dragStart = useRef({ x: 0, y: 0 });
-  const directionLogged = useRef(false);
+  useEffect(() => {
+    console.log('twist changed to', twist);
+    // autoTwist(twist);
+  }, [twist])
 
 
   useEffect(() => {
@@ -203,7 +203,7 @@ export default function Scene() {
       if (!directionLogged.current && Math.abs(dy) > 50) {
         const side = dragStart.current.x > window.innerWidth / 2 ? 'RIGHT' : 'LEFT';
         const dir = dy < 0 ? 'UP' : 'DOWN';
-        setupTwist(side, dir);
+        userTwist(side, dir);
         directionLogged.current = true;
       }
     };
@@ -215,7 +215,7 @@ export default function Scene() {
         if (Math.abs(velocity.current) > 0.0001) {
           rotationGroup.current.rotation.y += velocity.current;
           spinFrame.current = requestAnimationFrame(decay);
-          const snappedY = Math.round((rotationGroup.current.rotation.y - (step / 2)) / step) * step + (step / 2) + (Math.PI / 2)
+          const snappedY = (Math.round(rotationGroup.current.rotation.y / step - 0.5) + 0.5) * step + Math.PI / 2;
           flipGroup.current.rotation.y = -snappedY;
         }
       };

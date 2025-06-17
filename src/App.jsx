@@ -1,43 +1,43 @@
-import React from 'react';
+// src/App.jsx
+import React, { useState, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { EffectComposer, ChromaticAberration, Bloom } from '@react-three/postprocessing';
-import { BlendFunction } from 'postprocessing';
-import { Leva, useControls } from 'leva';
-import { Environment, ContactShadows, MeshReflectorMaterial, PerspectiveCamera, Float } from '@react-three/drei';
+import { EffectComposer, Bloom } from '@react-three/postprocessing';
+import {
+  Environment,
+  MeshReflectorMaterial,
+  PerspectiveCamera,
+  Float,
+} from '@react-three/drei';
 import Scene from './components/Scene';
+import Camera from './components/Camera';
 import './index.scss';
 
-function App() {
-  const { envPreset, envIntensity, envRotation } = useControls({
-    envPreset: {
-      options: [
-        'apartment',
-        'city',
-        'dawn',
-        'forest',
-        'lobby',
-        'night',
-        'park',
-        'studio',
-        'sunset',
-        'warehouse',
-      ],
-      value: 'city',
-    },
-    envIntensity: {
-      min: 0,
-      max: 100,
-      value: 2,
-    },
-    envRotation: {
-      min: 0,
-      max: Math.PI * 2,
-      value: Math.PI,
-    },
-  });
+export default function App() {
+  const slices = 8;
+  const [twistIndex, setTwistIndex] = useState(null);
+  const [webcamRunning, setWebcamRunning] = useState(false);
+  const videoElementRef = useRef();
+  const finishTwist = useRef(() => { });
+
+  const handlePlay = async () => {
+    // perform 5 random 4-slice flips in sequence
+    for (let i = 0; i < 5; i++) {
+      const idx = Math.floor(Math.random() * slices);
+      setTwistIndex(idx);
+      // wait until Scene signals this twist is finished
+      await new Promise((resolve) => {
+        finishTwist.current = resolve;
+      });
+    }
+  };
 
   return (
     <>
+      <Camera
+        webcamRunning={webcamRunning}
+        setWebcamRunning={setWebcamRunning}
+        videoElementRef={videoElementRef}
+      />
       <Canvas shadows>
         <PerspectiveCamera
           makeDefault
@@ -51,8 +51,13 @@ function App() {
           floatIntensity={1}
           floatingRange={[-0.1, 0.1]}
         >
-          <Scene />
+          <Scene
+            slices={slices}
+            twistIndex={twistIndex}
+            onTwistComplete={() => finishTwist.current()}
+          />
         </Float>
+
         <directionalLight
           position={[2, 4, -2]}
           intensity={5}
@@ -60,17 +65,15 @@ function App() {
           shadow-mapSize-width={1024}
           shadow-mapSize-height={1024}
         />
-        <pointLight
-          position={[-0.75, 1, -1.5]}
-          intensity={6}
-          castShadow
-        />
+        <pointLight position={[-0.75, 1, -1.5]} intensity={6} castShadow />
+
         <Environment
-          preset={envPreset}
+          preset="city"
           blur={0.05}
-          intensity={envIntensity}
-          environmentRotation={[0, envRotation, 0]}
+          intensity={2}
+          environmentRotation={[0, 0, 0]}
         />
+
         <mesh position={[0, -1.25, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[20, 20]} />
           <MeshReflectorMaterial
@@ -85,20 +88,8 @@ function App() {
             roughness={0.9}
           />
         </mesh>
-        {/* <ContactShadows
-          opacity={0.2}
-          scale={20}
-          blur={0.1}
-          far={10}
-          resolution={256}
-          color="#000000"
-          position={[0, -1.33, 0]}
-        /> */}
+
         <EffectComposer>
-          {/* <ChromaticAberration
-            blendFunction={BlendFunction.NORMAL}
-            offset={[0.0015, 0.0015]}
-          /> */}
           <Bloom
             intensity={1.5}
             luminanceThreshold={0.2}
@@ -106,9 +97,12 @@ function App() {
           />
         </EffectComposer>
       </Canvas>
-      <Leva />
+
+      <div className="ui">
+        <button type="button" onClick={handlePlay}>
+          Let's Play
+        </button>
+      </div>
     </>
   );
 }
-
-export default App;
