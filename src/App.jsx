@@ -32,7 +32,7 @@ export default function App() {
   };
 
   return (
-    <>
+    <div className="app">
       <Camera
         webcamRunning={webcamRunning}
         setWebcamRunning={setWebcamRunning}
@@ -41,8 +41,8 @@ export default function App() {
       <Canvas shadows>
         <PerspectiveCamera
           makeDefault
-          position={[0, 1.5, 8]}
-          rotation={[-0.2, 0, 0]}
+          position={[0, 1.5, 12]}
+          rotation={[-0.1, 0, 0]}
           fov={25}
         />
         <Float
@@ -74,7 +74,7 @@ export default function App() {
           environmentRotation={[0, 0, 0]}
         />
 
-        <mesh position={[0, -1.25, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <mesh position={[0, -1.25, 10]} rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[20, 20]} />
           <MeshReflectorMaterial
             blur={[400, 400]}
@@ -103,6 +103,6 @@ export default function App() {
           Let's Play
         </button>
       </div>
-    </>
+    </div>
   );
 }
