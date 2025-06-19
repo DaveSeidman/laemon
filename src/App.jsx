@@ -11,6 +11,7 @@ import {
 import Scene from './components/Scene';
 import Camera from './components/Camera';
 import './index.scss';
+import { Color } from 'three';
 
 export default function App() {
   const slices = 8;
@@ -68,7 +69,7 @@ export default function App() {
         <pointLight position={[-0.75, 1, -1.5]} intensity={6} castShadow />
 
         <Environment
-          preset="city"
+          preset="sunset"
           blur={0.05}
           intensity={2}
           environmentRotation={[0, 0, 0]}
@@ -77,15 +78,15 @@ export default function App() {
         <mesh position={[0, -1.25, 10]} rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[20, 20]} />
           <MeshReflectorMaterial
-            blur={[400, 400]}
-            resolution={512}
+            blur={[1000, 1000]}
+            resolution={1024}
             mixBlur={1}
-            mixStrength={20}
+            mixStrength={100}
             depthScale={0.5}
-            minDepthThreshold={0.1}
-            color="#555555"
-            metalness={0.5}
-            roughness={0.9}
+            minDepthThreshold={0.5}
+            color={new Color('rgb(15,30,15)')}
+            metalness={0.99}
+            roughness={0.99}
           />
         </mesh>
 

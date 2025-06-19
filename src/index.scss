@@ -1,17 +1,20 @@
 html, body, #root {
   margin: 0;
   padding: 0;
-  background: gray;
+  background: #1f2f24;
   width: 100%;
   height: 100%;
   overflow: hidden;
   touch-action: none;
   overscroll-behavior-x: none;
+  background-image: url('./assets/images/background.svg');
+  background-size: auto 125%;
+  background-position: top -3em center;
 }
 
 canvas {
-  width: 100vw;
-  height: 100vh;
+  // width: 100vw;
+  // height: 100vh;
 }
 
 .hidden {
@@ -25,5 +28,6 @@ canvas {
 }
 
 .app {
-  // background: red;
+  width: 100vw;
+  height: 100vh;
 }

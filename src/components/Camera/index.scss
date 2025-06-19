@@ -1,17 +1,21 @@
 .camera {
   position: absolute;
   inset: 0;
+  overflow: hidden;
 
   &-video {
     position: absolute;
-    aspect-ratio: .65;
+    aspect-ratio: .625;
     top: 5%;
     left: 50%;
     height: 70%;
     object-fit: cover;
     transform: translateX(-50%);
-    border-radius: 5%;
-    box-shadow: 0vh 2vh 4vh rgba(0, 0, 0, .5);
+    border-radius: 5vh;
+    // box-shadow: 0vh 2vh 4vh rgba(0, 0, 0, .5);
+    border-top: .4vh solid #b2c828;
+    border-left: .4vh solid #b2c828;
+    box-shadow: 1px 1px 16px 0px rgba(0, 0, 0, 0.8);
   }
 
   &-start {
