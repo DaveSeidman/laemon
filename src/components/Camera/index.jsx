@@ -5,7 +5,7 @@ const Camera = ({ setWidth, setHeight, setAudioSource, webcamRunning, setWebcamR
   const stream = useRef();
 
   const startCamera = async () => {
-    const constraints = { video: true };
+    const constraints = { video: { facingMode: 'user' } };
     stream.current = await navigator.mediaDevices.getUserMedia(constraints);
     const videoTrack = stream.current.getVideoTracks()[0];
     const { width, height } = videoTrack.getSettings();

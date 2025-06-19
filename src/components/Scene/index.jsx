@@ -1,11 +1,11 @@
 import React, { useRef, useEffect } from 'react';
-import { Vector3, Group, DoubleSide, } from 'three';
+import { Vector3, Group, DoubleSide } from 'three';
 import { useGLTF } from '@react-three/drei';
 import wedgeModel from '../../assets/models/wedges.glb';
 import { cubicEase, shuffle } from '../../utils';
 import './index.scss';
 
-export default function Scene({ slices, twist }) {
+export default function Scene({ slices, twistIndex }) {
   const rotationGroup = useRef();
   const flipGroup = useRef();
   const wedges = useRef();
@@ -24,43 +24,35 @@ export default function Scene({ slices, twist }) {
   const spinFrame = useRef();
   const dragStart = useRef({ x: 0, y: 0 });
   const directionLogged = useRef(false);
+  const twistAnimation = useRef(null);
+  const animFrame = useRef();
 
   const checkIfSolved = () => {
-    // 1) Get the puzzle’s current yaw
-    const yaw = rotationGroup.current.rotation.y % (2 * Math.PI);
-
-    // 2) Build an array of { originalIndex, relAngle }
-    const entries = meshRefs.current.map(mesh => {
+    const entries = meshRefs.current.map((mesh) => {
       const v = new Vector3();
       mesh.getWorldPosition(v);
 
-      // raw angle around Y, rebased so –Z → 0, in [0,2π)
-      let raw = Math.atan2(v.z, v.x);
-      raw = (raw + Math.PI / 2 + 2 * Math.PI) % (2 * Math.PI);
-
-      // subtract the ring’s yaw and normalize back into [0,2π)
-      const rel = (raw - yaw + 2 * Math.PI) % (2 * Math.PI);
+      let angle = Math.atan2(v.z, v.x);
+      angle = (angle + Math.PI / 2 + 2 * Math.PI) % (2 * Math.PI);
 
       return {
         originalIndex: mesh.userData.originalIndex,
-        relAngle: rel
+        angle,
       };
     });
 
-    // 3) Sort by that relAngle and pull out the original indices
+    // 3) Sort by that angle and pull out the original indices
     const ordered = entries
       .slice()
-      .sort((a, b) => a.relAngle - b.relAngle)
-      .map(e => e.originalIndex);
+      .sort((a, b) => a.angle - b.angle)
+      .map((e) => e.originalIndex);
 
     // 4) Compute “circular diffs” between consecutive entries, mod slices
-    const diffs = ordered
-      .slice(1)
-      .map((v, i) => (v - ordered[i] + slices) % slices);
+    const diffs = ordered.slice(1).map((v, i) => (v - ordered[i] + slices) % slices);
 
     // 5) Check for a constant +1 (forward) or (slices-1) (backward) step
-    const isForward = diffs.every(d => d === 1);
-    const isBackward = diffs.every(d => d === slices - 1);
+    const isForward = diffs.every((d) => d === 1);
+    const isBackward = diffs.every((d) => d === slices - 1);
 
     if (isForward || isBackward) {
       console.log('🟢 Puzzle is solved!');
@@ -69,10 +61,9 @@ export default function Scene({ slices, twist }) {
     }
   };
 
-
   useEffect(() => {
     if (gltf.scene.children.length < slices) return;
-    const sortedChildren = gltf.scene.children.sort((a, b) => a.name > b.name ? 1 : -1)
+    const sortedChildren = gltf.scene.children.sort((a, b) => (a.name > b.name ? 1 : -1));
 
     wedges.current.clear();
     const orderedIndices = [0, 1, 2, 3, 4, 5, 6, 7];
@@ -103,10 +94,6 @@ export default function Scene({ slices, twist }) {
     });
   }, [gltf]);
 
-
-  const twistAnimation = useRef(null);
-  const animFrame = useRef();
-
   const animateTwist = () => {
     if (!twistAnimation.current) return;
     let t = (performance.now() - twistAnimation.current.start) / twistDuration;
@@ -129,34 +116,40 @@ export default function Scene({ slices, twist }) {
     } else {
       twistAnimation.current.indices.forEach((i) => wedges.current.attach(meshRefs.current[i]));
       flipGroup.current.rotation.set(0, 0, 0);
-      const snappedY = Math.round((rotationGroup.current.rotation.y - (step / 2)) / step) * step + (step / 2) + (Math.PI / 2)
+      const snappedY = Math.round((rotationGroup.current.rotation.y - (step / 2)) / step) * step + (step / 2) + (Math.PI / 2);
       flipGroup.current.rotation.y = -snappedY;
       twistAnimation.current = null;
       checkIfSolved();
     }
   };
 
-  const userTwist = (side, direction) => {
-    const selected = [];
-    for (let i = 0; i < slices; i += 1) {
-      const worldPos = new Vector3();
-      meshRefs.current[i]?.getWorldPosition(worldPos);
-      // invert only the Float’s transform (its group is rotationGroup.parent)
-      const floatGroup = rotationGroup.current.parent;
-      floatGroup.worldToLocal(worldPos);
-      const isLeft = worldPos.x < 0;
-      if ((side === 'LEFT' && isLeft) || (side === 'RIGHT' && !isLeft)) {
-        selected.push(i);
-      }
-    }
-    selected.forEach((i) => flipGroup.current.attach(meshRefs.current[i]));
+  const twist = (side, direction, indices) => {
+    const slicesToFlip = indices || (() => {
+      const picked = [];
+      for (let i = 0; i < slices; i += 1) {
+        const worldPos = new Vector3();
+        meshRefs.current[i].getWorldPosition(worldPos);
 
+        // bring that point into the wheel’s own rotated coords:
+        const floatGroup = rotationGroup.current.parent;
+        floatGroup.worldToLocal(worldPos);
+        const isLeft = worldPos.x < 0;
+        if ((side === 'LEFT' && isLeft)
+          || (side === 'RIGHT' && !isLeft)) {
+          picked.push(i);
+        }
+      }
+      return picked;
+    })();
+
+    slicesToFlip.forEach((i) => flipGroup.current.attach(meshRefs.current[i]));
+    console.log(slicesToFlip, indices);
     const distance = side === 'LEFT' ? -0.5 : 0.5;
     twistAnimation.current = {
       start: performance.now(),
       lastOffset: 0,
       distance,
-      indices: selected,
+      indices: slicesToFlip,
       lastRot: 0,
       direction,
     };
@@ -165,16 +158,20 @@ export default function Scene({ slices, twist }) {
   };
 
   useEffect(() => {
-    console.log('twist changed to', twist);
-    // autoTwist(twist);
-  }, [twist])
+    if (twistIndex === null) return;
 
+    console.log(twistIndex);
+    // A random twistIndex has been passed in, set the flipGroup angle and select the slices to flip
+    flipGroup.current.rotation.y = twistIndex * step + (step / 2);
+    twist(Math.random() > 0.5 ? 'RIGHT' : 'LEFT', Math.random() > 0.5 ? 'UP' : 'DOWN', [
+      (twistIndex + 3) % slices,
+      (twistIndex + 4) % slices,
+      (twistIndex + 5) % slices,
+      (twistIndex + 6) % slices,
+    ]);
+  }, [twistIndex]);
 
   useEffect(() => {
-    const onClick = (e) => {
-      if (!dragged.current) velocity.current = e.clientX / innerWidth < .5 ? .05 : -.05;
-    }
-
     const onDown = (e) => {
       dragged.current = false;
       if (twistAnimation.current) return;
@@ -192,7 +189,7 @@ export default function Scene({ slices, twist }) {
       const dx = (e.clientX - prevX.current) * 0.01;
       rotationGroup.current.rotation.y += dx;
 
-      const snappedY = Math.round((rotationGroup.current.rotation.y - (step / 2)) / step) * step + (step / 2) + (Math.PI / 2)
+      const snappedY = Math.round((rotationGroup.current.rotation.y - (step / 2)) / step) * step + (step / 2) + (Math.PI / 2);
       flipGroup.current.rotation.y = -snappedY;
       velocity.current = dx;
       prevX.current = e.clientX;
@@ -203,7 +200,7 @@ export default function Scene({ slices, twist }) {
       if (!directionLogged.current && Math.abs(dy) > 50) {
         const side = dragStart.current.x > window.innerWidth / 2 ? 'RIGHT' : 'LEFT';
         const dir = dy < 0 ? 'UP' : 'DOWN';
-        userTwist(side, dir);
+        twist(side, dir);
         directionLogged.current = true;
       }
     };
@@ -221,13 +218,11 @@ export default function Scene({ slices, twist }) {
       };
       spinFrame.current = requestAnimationFrame(decay);
     };
-    addEventListener('click', onClick);
     addEventListener('pointerdown', onDown);
     addEventListener('pointermove', onMove);
     addEventListener('pointerup', onUp);
     addEventListener('pointerleave', onUp);
     return () => {
-      removeEventListener('click', onClick);
       removeEventListener('pointerdown', onDown);
       removeEventListener('pointermove', onMove);
       removeEventListener('pointerup', onUp);
@@ -239,7 +234,12 @@ export default function Scene({ slices, twist }) {
 
   return (
     <group ref={rotationGroup}>
-      <group ref={flipGroup} />
+      <group ref={flipGroup}>
+        <mesh>
+          <boxGeometry />
+          <meshBasicMaterial wireframe />
+        </mesh>
+      </group>
       <group ref={wedges} />
     </group>
   );

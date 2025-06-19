@@ -22,14 +22,15 @@ export default function App() {
 
   const handlePlay = async () => {
     // perform 5 random 4-slice flips in sequence
-    for (let i = 0; i < 5; i++) {
-      const idx = Math.floor(Math.random() * slices);
-      setTwistIndex(idx);
-      // wait until Scene signals this twist is finished
-      await new Promise((resolve) => {
-        finishTwist.current = resolve;
-      });
-    }
+    // for (let i = 0; i < 5; i++) {
+    //   const idx = Math.floor(Math.random() * slices);
+    //   setTwistIndex(idx);
+    //   // wait until Scene signals this twist is finished
+    //   await new Promise((resolve) => {
+    //     finishTwist.current = resolve;
+    //   });
+    // }
+    setTwistIndex(Math.floor(Math.random() * slices));
   };
 
   return (
@@ -39,7 +40,9 @@ export default function App() {
         setWebcamRunning={setWebcamRunning}
         videoElementRef={videoElementRef}
       />
-      <Canvas shadows>
+      <Canvas
+        shadows
+      >
         <PerspectiveCamera
           makeDefault
           position={[0, 1.5, 12]}
@@ -75,8 +78,8 @@ export default function App() {
           environmentRotation={[0, 0, 0]}
         />
 
-        <mesh position={[0, -1.25, 10]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[20, 20]} />
+        <mesh position={[0, -1.25, 2]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[2, 4]} />
           <MeshReflectorMaterial
             blur={[1000, 1000]}
             resolution={1024}
@@ -84,7 +87,7 @@ export default function App() {
             mixStrength={100}
             depthScale={0.5}
             minDepthThreshold={0.5}
-            color={new Color('rgb(15,30,15)')}
+            color={new Color('rgb(27,40,20)')}
             metalness={0.99}
             roughness={0.99}
           />

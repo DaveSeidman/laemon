@@ -1,3 +1,8 @@
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('./assets/fonts/jakarta-sans.woff2');
+}
+
 html, body, #root {
   margin: 0;
   padding: 0;
@@ -10,11 +15,7 @@ html, body, #root {
   background-image: url('./assets/images/background.svg');
   background-size: auto 125%;
   background-position: top -3em center;
-}
-
-canvas {
-  // width: 100vw;
-  // height: 100vh;
+  font-size: 16px;
 }
 
 .hidden {
@@ -30,4 +31,16 @@ canvas {
 .app {
   width: 100vw;
   height: 100vh;
+}
+
+button {
+  background: #B2C828;
+  border-radius: 0.5em;
+  border: none;
+  box-shadow: 1px 1px 16px 0px rgba(0,0,0,0.49);
+  font-family: 'Plus Jakarta Sans';
+  color: white;
+  font-weight: 700;
+  padding: 1rem;
+  cursor: pointer;
 }
