@@ -19,6 +19,10 @@ export default function Scene({ slices, twistIndex, setTwistIndex, onTwistComple
   const raycaster = useRef(new Raycaster());
   const pointer = useRef(new Vector2());
 
+  // Track pointer movement to differentiate click vs drag
+  const isDragging = useRef(false);
+  const startPos = useRef({ x: 0, y: 0 });
+
   const step = (Math.PI * 2) / slices;
   const twistDuration = 500;
   const basePhiLength = (Math.PI * 2) / slices;
@@ -29,7 +33,6 @@ export default function Scene({ slices, twistIndex, setTwistIndex, onTwistComple
   const animFrame = useRef();
 
   const checkIfSolved = () => {
-    // Build an array with mesh + angle + original index
     const entries = meshRefs.current.map((mesh) => {
       const v = new Vector3();
       mesh.getWorldPosition(v);
@@ -38,37 +41,27 @@ export default function Scene({ slices, twistIndex, setTwistIndex, onTwistComple
       return { mesh, angle, originalIndex: mesh.userData.originalIndex };
     });
 
-    // Sort by angle – clockwise order around the wheel
     entries.sort((a, b) => b.angle - a.angle);
-
-    // Replace meshRefs.current with the new, ordered list
     meshRefs.current = entries.map((e) => e.mesh);
-
-    // Extract the new wheel-order of original indices
     meshOrder.current = entries.map((e) => e.originalIndex);
 
-    // Check if the puzzle is solved
     const diffs = meshOrder.current.slice(1).map((v, i) => (v - meshOrder.current[i] + slices) % slices);
     const isForward = diffs.every((d) => d === 1);
     const isBackward = diffs.every((d) => d === slices - 1);
 
     if (isForward || isBackward) {
       console.log('🟢 Puzzle is solved!', meshOrder.current);
-    } else {
-      // console.log('🔴 Not solved, current order:', meshOrder.current);
     }
   };
 
   const setWedges = () => {
     const sortedChildren = gltf.scene.children.sort((a, b) => (a.name > b.name ? 1 : -1));
-
     wedges.current.clear();
     const indices = [0, 1, 2, 3, 4, 5, 6, 7];
 
     indices.forEach((shuffledIndex, index) => {
       const wedge = sortedChildren[index].clone(true);
       wedge.userData.originalIndex = index;
-
       wedge.traverse((child) => {
         if (child.isMesh) {
           child.castShadow = true;
@@ -88,38 +81,10 @@ export default function Scene({ slices, twistIndex, setTwistIndex, onTwistComple
       meshRefs.current[indices[index]] = wedge;
     });
   };
-  // Model finished loading, set things up:
+
   useEffect(() => {
     if (gltf.scene.children.length < slices) return;
-
     setWedges();
-    // const sortedChildren = gltf.scene.children.sort((a, b) => (a.name > b.name ? 1 : -1));
-
-    // wedges.current.clear();
-    // const indices = [0, 1, 2, 3, 4, 5, 6, 7];
-
-    // indices.forEach((shuffledIndex, index) => {
-    //   const wedge = sortedChildren[index].clone(true);
-    //   wedge.userData.originalIndex = index;
-
-    //   wedge.traverse((child) => {
-    //     if (child.isMesh) {
-    //       child.castShadow = true;
-    //       child.receiveShadow = true;
-    //     }
-    //   });
-
-    //   const offsetContainer = new Group();
-    //   offsetContainer.position.set(0, 0, -gap);
-    //   offsetContainer.add(wedge);
-
-    //   const rotationContainer = new Group();
-    //   rotationContainer.rotation.y = shuffledIndex * basePhiLength;
-    //   rotationContainer.add(offsetContainer);
-
-    //   wedges.current.add(rotationContainer);
-    //   meshRefs.current[indices[index]] = wedge;
-    // });
   }, [gltf]);
 
   const animateTwist = () => {
@@ -128,21 +93,16 @@ export default function Scene({ slices, twistIndex, setTwistIndex, onTwistComple
     if (t > 1) t = 1;
 
     const easedT = cubicEase(t);
-
-    const offset = Math.sin(Math.PI * easedT) * twistAnimation.current.distance; // You can keep the sine or use the easedT directly
-    twistAnimation.current.lastOffset = offset;
-
     const rotationAngle = Math.PI;
     const deltaRot = easedT * rotationAngle - twistAnimation.current.lastRot;
-
     const rotDir = twistAnimation.current.direction === 'UP' ? 1 : -1;
+
     flipGroup.current.rotateZ(rotDir * deltaRot);
     twistAnimation.current.lastRot += deltaRot;
 
     if (easedT < 1) {
       animFrame.current = requestAnimationFrame(animateTwist);
     } else {
-      console.log('done twisting');
       twistAnimation.current.indices.forEach((i) => wedges.current.attach(meshRefs.current[i]));
       twistAnimation.current = null;
       onTwistComplete();
@@ -150,27 +110,22 @@ export default function Scene({ slices, twistIndex, setTwistIndex, onTwistComple
     }
   };
 
-  // setup twist based on the index of the first wedge in the selection of slices / 2
   const startTwist = (index) => {
-    console.log('twist on', index);
+    if (twistAnimation.current) return;
     const selectedWedge = meshRefs.current[index];
     const worldPos = new Vector3();
     selectedWedge.getWorldPosition(worldPos);
     flipGroup.current.lookAt(worldPos.x, 0, worldPos.z);
     flipGroup.current.rotateY((Math.PI / 2) - (step / 2));
-    const secondWedgeIndex = (index + 1) % slices;
-    const thirdWedgeIndex = (index + 2) % slices;
-    const fourthWedgeIndex = (index + 3) % slices;
 
     const slicesToFlip = [
       index,
-      secondWedgeIndex,
-      thirdWedgeIndex,
-      fourthWedgeIndex,
+      (index + 1) % slices,
+      (index + 2) % slices,
+      (index + 3) % slices,
     ];
 
     slicesToFlip.forEach((i) => flipGroup.current.attach(meshRefs.current[i]));
-
     twistAnimation.current = {
       start: performance.now(),
       lastOffset: 0,
@@ -182,40 +137,61 @@ export default function Scene({ slices, twistIndex, setTwistIndex, onTwistComple
     animateTwist();
   };
 
-  useEffect(() => {
-    const handleClick = (event) => {
-      if (twistAnimation.current) return console.log('still twisting please wait');
-      const { left, top, width, height } = gl.domElement.getBoundingClientRect();
-      pointer.current.x = ((event.clientX - left) / width) * 2 - 1;
-      pointer.current.y = -((event.clientY - top) / height) * 2 + 1;
-      raycaster.current.setFromCamera(pointer.current, camera);
-      const hits = raycaster.current.intersectObjects(meshRefs.current);
-      if (!hits.length) return;
+  // Handle pointer events instead of click
+  const handlePointerClick = (event) => {
+    const { left, top, width, height } = gl.domElement.getBoundingClientRect();
+    pointer.current.x = ((event.clientX - left) / width) * 2 - 1;
+    pointer.current.y = -((event.clientY - top) / height) * 2 + 1;
+    raycaster.current.setFromCamera(pointer.current, camera);
+    const hits = raycaster.current.intersectObjects(meshRefs.current);
+    if (!hits.length) return;
 
-      const hitObj = hits[0].object;
-      const selectedWedge = hitObj.parent;
-      const selectedWedgeIndex = meshRefs.current.findIndex((m) => m === selectedWedge);
-      startTwist(selectedWedgeIndex);
+    const hitObj = hits[0].object;
+    const selectedWedge = hitObj.parent;
+    const selectedIndex = meshRefs.current.findIndex((m) => m === selectedWedge);
+    startTwist(selectedIndex);
+  };
+
+  useEffect(() => {
+    const dom = gl.domElement;
+    const onPointerDown = (event) => {
+      if (twistAnimation.current) return;
+      startPos.current = { x: event.clientX, y: event.clientY };
+      isDragging.current = false;
+      dom.addEventListener('pointermove', onPointerMove);
+      dom.addEventListener('pointerup', onPointerUp);
+    };
+    const onPointerMove = (event) => {
+      const dx = event.clientX - startPos.current.x;
+      const dy = event.clientY - startPos.current.y;
+      if (Math.hypot(dx, dy) > 5) {
+        isDragging.current = true;
+      }
+    };
+    const onPointerUp = (event) => {
+      dom.removeEventListener('pointermove', onPointerMove);
+      dom.removeEventListener('pointerup', onPointerUp);
+      if (!isDragging.current) {
+        handlePointerClick(event);
+      }
     };
 
-    gl.domElement.addEventListener('pointerdown', handleClick);
-    return () => gl.domElement.removeEventListener('pointerdown', handleClick);
+    dom.addEventListener('pointerdown', onPointerDown);
+    return () => {
+      dom.removeEventListener('pointerdown', onPointerDown);
+      dom.removeEventListener('pointermove', onPointerMove);
+      dom.removeEventListener('pointerup', onPointerUp);
+    };
   }, [gl.domElement, camera, meshRefs.current]);
 
   useEffect(() => {
     if (twistIndex === null || !gltf) return;
-
     startTwist(twistIndex);
   }, [twistIndex, gltf]);
 
   useEffect(() => {
     if (reset) {
       setWedges();
-      // wedges.current.children.forEach((container, idx) => {
-      //   container.rotation.y = idx * basePhiLength;
-      // });
-      // flipGroup.current.rotation.set(0, 0, 0);
-      // setTwistIndex(null);
       setReset(false);
     }
   }, [reset]);
