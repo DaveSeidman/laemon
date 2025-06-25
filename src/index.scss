@@ -3,6 +3,15 @@
   src: url('./assets/fonts/jakarta-sans.woff2');
 }
 
+@keyframes drift {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: -200vh -100vh;
+  }
+}
+
 html, body, #root {
   margin: 0;
   padding: 0;
@@ -12,9 +21,7 @@ html, body, #root {
   overflow: hidden;
   touch-action: none;
   overscroll-behavior-x: none;
-  background-image: url('./assets/images/background.svg');
-  background-size: auto 125%;
-  background-position: top -3em center;
+
   font-size: 16px;
 }
 
@@ -26,11 +33,20 @@ html, body, #root {
 .ui {
   position: absolute;
   inset: 0;
+  pointer-events: none;
+
+  .debug {
+    pointer-events: all;
+  }
 }
 
 .app {
   width: 100vw;
   height: 100vh;
+  background-image: url('./assets/images/background.svg');
+  background-size: 100vh 100vh;
+  background-position: top -3em center;
+  animation: drift 50s linear infinite;
 }
 
 button {

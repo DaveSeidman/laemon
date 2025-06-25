@@ -7,6 +7,7 @@ import {
   MeshReflectorMaterial,
   PerspectiveCamera,
   Float,
+  OrbitControls,
 } from '@react-three/drei';
 import Scene from './components/Scene';
 import Camera from './components/Camera';
@@ -16,11 +17,13 @@ import { Color } from 'three';
 export default function App() {
   const slices = 8;
   const [twistIndex, setTwistIndex] = useState(null);
+  const [highlight, setHighlight] = useState(null);
   const [webcamRunning, setWebcamRunning] = useState(false);
   const videoElementRef = useRef();
   const finishTwist = useRef(() => { });
+  const buttons = new Array(8).fill(true);
 
-  const handlePlay = async () => {
+  const handlePlay = async (i) => {
     // perform 5 random 4-slice flips in sequence
     // for (let i = 0; i < 5; i++) {
     //   const idx = Math.floor(Math.random() * slices);
@@ -30,37 +33,41 @@ export default function App() {
     //     finishTwist.current = resolve;
     //   });
     // }
-    setTwistIndex(Math.floor(Math.random() * slices));
+    setTwistIndex(i);
+    // setTwistIndex(Math.floor(Math.random() * slices));
   };
 
   return (
     <div className="app">
-      <Camera
+      {/* <Camera
         webcamRunning={webcamRunning}
         setWebcamRunning={setWebcamRunning}
         videoElementRef={videoElementRef}
-      />
+      /> */}
       <Canvas
         shadows
       >
+        <OrbitControls />
         <PerspectiveCamera
           makeDefault
           position={[0, 1.5, 12]}
           rotation={[-0.1, 0, 0]}
           fov={25}
         />
-        <Float
+        {/* <Float
           speed={2}
           rotationIntensity={1}
           floatIntensity={1}
           floatingRange={[-0.1, 0.1]}
-        >
-          <Scene
-            slices={slices}
-            twistIndex={twistIndex}
-            onTwistComplete={() => finishTwist.current()}
-          />
-        </Float>
+        > */}
+        <Scene
+          slices={slices}
+          twistIndex={twistIndex}
+          setTwistIndex={setTwistIndex}
+          onTwistComplete={() => finishTwist.current()}
+          highlight={highlight}
+        />
+        {/* </Float> */}
 
         <directionalLight
           position={[2, 4, -2]}
@@ -78,7 +85,7 @@ export default function App() {
           environmentRotation={[0, 0, 0]}
         />
 
-        <mesh position={[0, -1.25, 2]} rotation={[-Math.PI / 2, 0, 0]}>
+        {/* <mesh position={[0, -1.25, 2]} rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[2, 4]} />
           <MeshReflectorMaterial
             blur={[1000, 1000]}
@@ -91,21 +98,37 @@ export default function App() {
             metalness={0.99}
             roughness={0.99}
           />
-        </mesh>
+        </mesh> */}
 
-        <EffectComposer>
+        {/* <EffectComposer>
           <Bloom
             intensity={1.5}
             luminanceThreshold={0.2}
             luminanceSmoothing={1}
           />
-        </EffectComposer>
+        </EffectComposer> */}
       </Canvas>
 
       <div className="ui">
-        <button type="button" onClick={handlePlay}>
-          Let's Play
+        <div className="debug">
+          {buttons.map((b, i) => (
+            <button
+              key={`button-${i}`}
+              type="button"
+              onPointerDown={() => { setHighlight(i); }}
+              onPointerUp={() => { setHighlight(null); }}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => handlePlay(i)}
+        >
+          Let's Go!
         </button>
+
       </div>
     </div>
   );
