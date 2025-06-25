@@ -26,8 +26,6 @@ export default function Scene({ slices, twistIndex, setTwistIndex, highlight }) 
   const originalMaterial = useRef();
   const prevHighlight = useRef();
   const highlightMaterial = useRef(new MeshNormalMaterial());
-  const primaryMaterial = useRef(new MeshStandardMaterial({ color: '#ffa500' }));
-  const secondaryMaterial = useRef(new MeshStandardMaterial({ color: '#4d3303' }));
 
   const checkIfSolved = () => {
     // 1️⃣  Build an array with mesh + angle + original index
@@ -145,17 +143,6 @@ export default function Scene({ slices, twistIndex, setTwistIndex, highlight }) 
         thirdWedgeIndex,
         fourthWedgeIndex,
       ];
-      meshRefs.current[selectedWedgeIndex].children[0].material = primaryMaterial.current;
-      meshRefs.current[secondWedgeIndex].children[0].material = secondaryMaterial.current;
-      meshRefs.current[thirdWedgeIndex].children[0].material = secondaryMaterial.current;
-      meshRefs.current[fourthWedgeIndex].children[0].material = secondaryMaterial.current;
-
-      setTimeout(() => {
-        meshRefs.current[selectedWedgeIndex].children[0].material = originalMaterial.current;
-        meshRefs.current[secondWedgeIndex].children[0].material = originalMaterial.current;
-        meshRefs.current[thirdWedgeIndex].children[0].material = originalMaterial.current;
-        meshRefs.current[fourthWedgeIndex].children[0].material = originalMaterial.current;
-      }, 500);
 
       slicesToFlip.forEach((i) => flipGroup.current.attach(meshRefs.current[i]));
 
@@ -216,11 +203,11 @@ export default function Scene({ slices, twistIndex, setTwistIndex, highlight }) 
   return (
     <group ref={rotationGroup}>
       <group ref={flipGroup}>
-        <mesh>
+        {/* <mesh>
           <boxGeometry args={[2, 2, 2]} />
           <meshBasicMaterial wireframe />
         </mesh>
-        <arrowHelper />
+        <arrowHelper /> */}
       </group>
       <group ref={wedges} />
     </group>

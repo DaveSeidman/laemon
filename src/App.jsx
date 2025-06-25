@@ -2,17 +2,11 @@
 import React, { useState, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
-import {
-  Environment,
-  MeshReflectorMaterial,
-  PerspectiveCamera,
-  Float,
-  OrbitControls,
-} from '@react-three/drei';
+import { Environment, MeshReflectorMaterial, PerspectiveCamera, Float, OrbitControls } from '@react-three/drei';
+import { Color } from 'three';
 import Scene from './components/Scene';
 import Camera from './components/Camera';
 import './index.scss';
-import { Color } from 'three';
 
 export default function App() {
   const slices = 8;
@@ -21,7 +15,6 @@ export default function App() {
   const [webcamRunning, setWebcamRunning] = useState(false);
   const videoElementRef = useRef();
   const finishTwist = useRef(() => { });
-  const buttons = new Array(8).fill(true);
 
   const handlePlay = async (i) => {
     // perform 5 random 4-slice flips in sequence
@@ -39,20 +32,26 @@ export default function App() {
 
   return (
     <div className="app">
-      {/* <Camera
+      <Camera
         webcamRunning={webcamRunning}
         setWebcamRunning={setWebcamRunning}
         videoElementRef={videoElementRef}
-      /> */}
+      />
       <Canvas
         shadows
       >
-        <OrbitControls />
+        <OrbitControls
+          enableZoom={false}
+        // minZoom={0.1}
+        // maxZoom={2}
+        />
         <PerspectiveCamera
           makeDefault
           position={[0, 1.5, 12]}
           rotation={[-0.1, 0, 0]}
           fov={25}
+        // near={3}
+        // far={10}
         />
         {/* <Float
           speed={2}
@@ -75,6 +74,8 @@ export default function App() {
           castShadow
           shadow-mapSize-width={1024}
           shadow-mapSize-height={1024}
+        // shadow-bias={0.000001}
+
         />
         <pointLight position={[-0.75, 1, -1.5]} intensity={6} castShadow />
 
@@ -85,8 +86,8 @@ export default function App() {
           environmentRotation={[0, 0, 0]}
         />
 
-        {/* <mesh position={[0, -1.25, 2]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[2, 4]} />
+        <mesh position={[0, -1.25, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[3, 3]} />
           <MeshReflectorMaterial
             blur={[1000, 1000]}
             resolution={1024}
@@ -98,30 +99,18 @@ export default function App() {
             metalness={0.99}
             roughness={0.99}
           />
-        </mesh> */}
+        </mesh>
 
-        {/* <EffectComposer>
+        <EffectComposer>
           <Bloom
             intensity={1.5}
             luminanceThreshold={0.2}
             luminanceSmoothing={1}
           />
-        </EffectComposer> */}
+        </EffectComposer>
       </Canvas>
 
       <div className="ui">
-        <div className="debug">
-          {buttons.map((b, i) => (
-            <button
-              key={`button-${i}`}
-              type="button"
-              onPointerDown={() => { setHighlight(i); }}
-              onPointerUp={() => { setHighlight(null); }}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
         <button
           type="button"
           onClick={() => handlePlay(i)}
