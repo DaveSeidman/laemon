@@ -8,7 +8,7 @@ import wedgeModel from '../../assets/models/wedges.glb';
 import { cubicEase, shuffle } from '../../utils';
 import './index.scss';
 
-export default function Scene({ slices, twistIndex, setTwistIndex, onTwistComplete, reset, setReset }) {
+export default function Scene({ slices, twistIndex, setTwistIndex, onTwistComplete, reset, setReset, setCompleted }) {
   const rotationGroup = useRef();
   const flipGroup = useRef();
   const wedges = useRef();
@@ -51,6 +51,7 @@ export default function Scene({ slices, twistIndex, setTwistIndex, onTwistComple
 
     if (isForward || isBackward) {
       console.log('🟢 Puzzle is solved!', meshOrder.current);
+      setCompleted(true);
     }
   };
 

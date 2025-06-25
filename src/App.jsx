@@ -5,6 +5,7 @@ import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { Environment, MeshReflectorMaterial, PerspectiveCamera, Float, OrbitControls } from '@react-three/drei';
 import Scene from './components/Scene';
 import Camera from './components/Camera';
+import UI from './components/UI';
 import './index.scss';
 
 export default function App() {
@@ -13,6 +14,7 @@ export default function App() {
   const [twistIndex, setTwistIndex] = useState(null);
   const [webcamRunning, setWebcamRunning] = useState(false);
   const [reset, setReset] = useState(false);
+  const [completed, setCompleted] = useState(false);
   const videoElementRef = useRef();
   const finishTwist = useRef(() => { });
 
@@ -50,7 +52,10 @@ export default function App() {
         videoElementRef={videoElementRef}
       />
       <Canvas shadows>
-        <OrbitControls enableZoom={false} />
+        <OrbitControls
+          enableZoom={false}
+          enablePan={false}
+        />
         <PerspectiveCamera
           makeDefault
           position={[0, 1.5, 12]}
@@ -70,6 +75,7 @@ export default function App() {
           onTwistComplete={() => finishTwist.current()}
           reset={reset}
           setReset={setReset}
+          setCompleted={setCompleted}
         />
         {/* </Float> */}
 
@@ -113,26 +119,12 @@ export default function App() {
         </EffectComposer>
       </Canvas>
 
-      <div className="ui">
-        <div className={`ui-start ${!shuffled ? '' : 'hidden'}`}>
-          <button
-            className="ui-start-button"
-            type="button"
-            onClick={startGame}
-          >
-            Let's Go!
-          </button>
-        </div>
-
-        <button
-          className={`ui-restart ${shuffled ? '' : 'hidden'}`}
-          type="button"
-          onClick={restartGame}
-        >
-          Restart
-        </button>
-
-      </div>
+      <UI
+        completed={completed}
+        shuffled={shuffled}
+        startGame={startGame}
+        restartGame={restartGame}
+      />
     </div>
   );
 }

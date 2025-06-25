@@ -6,9 +6,9 @@
   &-video {
     position: absolute;
     aspect-ratio: .625;
-    top: 22.5%;
+    top: 10%;
     left: 50%;
-    height: 55%;
+    height: 80%;
     object-fit: cover;
     transform: translateX(-50%);
     border-radius: 5vh;
@@ -20,7 +20,10 @@
 
   &-start {
     position: absolute;
-    right: 0;
+    left: 50%;
     top: 0;
+    z-index: 2;
+    margin-top: 2rem;
+    transform: translateX(-50%);
   }
 }

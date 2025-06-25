@@ -1,0 +1,32 @@
+.ui {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  & > * {
+    pointer-events: all;
+  }
+
+  &-start {
+    position: absolute;
+    inset: 0;
+    transition: opacity .5s, visibility .5s;
+
+    &-button {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+  }
+
+  &-restart {
+    transition: opacity .5s, visibility .5s;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 2rem;
+  }
+
+}
