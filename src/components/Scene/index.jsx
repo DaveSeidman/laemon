@@ -1,5 +1,7 @@
+// TODO: decide between slices and wedges
+
 import React, { useRef, useEffect } from 'react';
-import { Vector3, Group, DoubleSide, Raycaster, MeshNormalMaterial, Vector2 } from 'three';
+import { Vector3, Group, DoubleSide, Raycaster, MeshNormalMaterial, Vector2, MeshStandardMaterial, Quaternion } from 'three';
 import { useThree } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import wedgeModel from '../../assets/models/wedges.glb';
@@ -28,9 +30,11 @@ export default function Scene({ slices, twistIndex, setTwistIndex, highlight }) 
   const directionLogged = useRef(false);
   const twistAnimation = useRef(null);
   const animFrame = useRef();
-  const originalMaterialRef = useRef();
+  const originalMaterial = useRef();
   const prevHighlight = useRef();
   const highlightMaterial = useRef(new MeshNormalMaterial());
+  const primaryMaterial = useRef(new MeshStandardMaterial({ color: '#ffa500' }));
+  const secondaryMaterial = useRef(new MeshStandardMaterial({ color: '#4d3303' }));
 
   const checkIfSolved = () => {
     // 1️⃣  Build an array with mesh + angle + original index
@@ -92,7 +96,7 @@ export default function Scene({ slices, twistIndex, setTwistIndex, highlight }) 
       wedge.userData.originalIndex = index;
       // wedge.userData.currentIndex = index;
       if (index === 0) {
-        originalMaterialRef.current = wedge.children[0].material.clone();
+        originalMaterial.current = wedge.children[0].material.clone();
       }
       wedge.traverse((child) => {
         if (child.isMesh) {
@@ -130,18 +134,39 @@ export default function Scene({ slices, twistIndex, setTwistIndex, highlight }) 
       pointer.current.y = -((event.clientY - top) / height) * 2 + 1;
 
       raycaster.current.setFromCamera(pointer.current, camera);
-      // cast against all your wedge meshes (including their children)
-      const hits = raycaster.current.intersectObjects(meshRefs.current, true);
+
+      const hits = raycaster.current.intersectObjects(meshRefs.current);
       if (!hits.length) return;
 
       const hitObj = hits[0].object;
-      const { name, originalIndex } = hitObj.parent.userData;
-      console.log(name, originalIndex);
-      const selectedWedge = hitObj.parent.children[0];
-      selectedWedge.material = highlightMaterial.current;
+      const selectedWedge = hitObj.parent;
+
+      const direction = new Vector3();
+      // const quat = new Quaternion();
+      selectedWedge.getWorldDirection(direction);
+      const angle = -Math.atan2(direction.z, direction.x) - step / 2;
+      // angle = (angle + (Math.PI / 2) + (0 * Math.PI)) % (2 * Math.PI);
+      flipGroup.current.rotation.y = angle;
+
+      // selectedWedge.getWorldQuaternion(quat);
+      console.log(angle * (180 / Math.PI));
+
+      const selectedWedgeIndex = meshRefs.current.findIndex((m) => m === selectedWedge);
+      const secondWedgeIndex = (selectedWedgeIndex + 1) % slices;
+      const thirdWedgeIndex = (selectedWedgeIndex + 2) % slices;
+      const fourthWedgeIndex = (selectedWedgeIndex + 3) % slices;
+
+      meshRefs.current[selectedWedgeIndex].children[0].material = primaryMaterial.current;
+      meshRefs.current[secondWedgeIndex].children[0].material = secondaryMaterial.current;
+      meshRefs.current[thirdWedgeIndex].children[0].material = secondaryMaterial.current;
+      meshRefs.current[fourthWedgeIndex].children[0].material = secondaryMaterial.current;
+
       setTimeout(() => {
-        selectedWedge.material = originalMaterialRef.current;
-      }, 1000);
+        meshRefs.current[selectedWedgeIndex].children[0].material = originalMaterial.current;
+        meshRefs.current[secondWedgeIndex].children[0].material = originalMaterial.current;
+        meshRefs.current[thirdWedgeIndex].children[0].material = originalMaterial.current;
+        meshRefs.current[fourthWedgeIndex].children[0].material = originalMaterial.current;
+      }, 500);
     };
 
     gl.domElement.addEventListener('pointerdown', handleClick);
@@ -232,7 +257,7 @@ export default function Scene({ slices, twistIndex, setTwistIndex, highlight }) 
     // setTimeout(() => {
     //   meshRefs.current.forEach((mesh, index) => {
     //     if (selected.indexOf(index) >= 0) {
-    //       mesh.children[0].material = originalMaterialRef.current;
+    //       mesh.children[0].material = originalMaterial.current;
     //     }
     //   });
     // }, 4000);
@@ -244,7 +269,7 @@ export default function Scene({ slices, twistIndex, setTwistIndex, highlight }) 
       mesh.material = highlightMaterial.current;
       prevHighlight.current = mesh;
     } else if (prevHighlight.current) {
-      prevHighlight.current.material = originalMaterialRef.current;
+      prevHighlight.current.material = originalMaterial.current;
     }
   }, [highlight]);
 
