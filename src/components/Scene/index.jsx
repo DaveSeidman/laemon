@@ -8,12 +8,16 @@ import wedgeModel from '../../assets/models/wedges.glb';
 import { cubicEase, shuffle } from '../../utils';
 import './index.scss';
 
-export default function Scene({ slices, twistIndex, setTwistIndex, highlight }) {
+export default function Scene({ slices, twistIndex, setTwistIndex, onTwistComplete, reset, setReset }) {
   const rotationGroup = useRef();
   const flipGroup = useRef();
   const wedges = useRef();
   const meshRefs = useRef([]);
   const meshOrder = useRef([0, 1, 2, 3, 4, 5, 6, 7]);
+
+  const { gl, camera } = useThree();
+  const raycaster = useRef(new Raycaster());
+  const pointer = useRef(new Vector2());
 
   const step = (Math.PI * 2) / slices;
   const twistDuration = 500;
@@ -23,25 +27,15 @@ export default function Scene({ slices, twistIndex, setTwistIndex, highlight }) 
   const gltf = useGLTF(wedgeModel);
   const twistAnimation = useRef(null);
   const animFrame = useRef();
-  const originalMaterial = useRef();
-  const prevHighlight = useRef();
-  const highlightMaterial = useRef(new MeshNormalMaterial());
 
   const checkIfSolved = () => {
-    // 1️⃣  Build an array with mesh + angle + original index
+    // Build an array with mesh + angle + original index
     const entries = meshRefs.current.map((mesh) => {
       const v = new Vector3();
       mesh.getWorldPosition(v);
-
       const rawAngle = Math.atan2(v.z, v.x);
-
       const angle = (rawAngle + (Math.PI / 2) + (2 * Math.PI)) % (2 * Math.PI);
-
-      return {
-        mesh, // reference to the wedge mesh
-        angle, // its current polar angle
-        originalIndex: mesh.userData.originalIndex,
-      };
+      return { mesh, angle, originalIndex: mesh.userData.originalIndex };
     });
 
     // Sort by angle – clockwise order around the wheel
@@ -49,9 +43,6 @@ export default function Scene({ slices, twistIndex, setTwistIndex, highlight }) 
 
     // Replace meshRefs.current with the new, ordered list
     meshRefs.current = entries.map((e) => e.mesh);
-
-    //      (optional) store a “currentIndex” on each mesh for easy logging/debugging
-    // meshRefs.current.forEach((mesh, i) => (mesh.userData.currentIndex = i));
 
     // Extract the new wheel-order of original indices
     meshOrder.current = entries.map((e) => e.originalIndex);
@@ -61,9 +52,6 @@ export default function Scene({ slices, twistIndex, setTwistIndex, highlight }) 
     const isForward = diffs.every((d) => d === 1);
     const isBackward = diffs.every((d) => d === slices - 1);
 
-    // console.log(meshRefs.current.map((m) => m.userData.originalIndex + 1));
-    // console.log(meshRefs.current.map((m) => `${m.userData.originalIndex} → ${m.userData.currentIndex}`));
-    // setTwistIndex(null);
     if (isForward || isBackward) {
       console.log('🟢 Puzzle is solved!', meshOrder.current);
     } else {
@@ -71,9 +59,7 @@ export default function Scene({ slices, twistIndex, setTwistIndex, highlight }) 
     }
   };
 
-  // Model finished loading, set things up:
-  useEffect(() => {
-    if (gltf.scene.children.length < slices) return;
+  const setWedges = () => {
     const sortedChildren = gltf.scene.children.sort((a, b) => (a.name > b.name ? 1 : -1));
 
     wedges.current.clear();
@@ -82,10 +68,7 @@ export default function Scene({ slices, twistIndex, setTwistIndex, highlight }) 
     indices.forEach((shuffledIndex, index) => {
       const wedge = sortedChildren[index].clone(true);
       wedge.userData.originalIndex = index;
-      // wedge.userData.currentIndex = index;
-      if (index === 0) {
-        originalMaterial.current = wedge.children[0].material.clone();
-      }
+
       wedge.traverse((child) => {
         if (child.isMesh) {
           child.castShadow = true;
@@ -104,62 +87,40 @@ export default function Scene({ slices, twistIndex, setTwistIndex, highlight }) 
       wedges.current.add(rotationContainer);
       meshRefs.current[indices[index]] = wedge;
     });
-  }, [gltf]);
-
-  const { gl, camera } = useThree();
-  const raycaster = useRef(new Raycaster());
-  const pointer = useRef(new Vector2());
-
+  };
+  // Model finished loading, set things up:
   useEffect(() => {
-    const handleClick = (event) => {
-      if (twistAnimation.current) return console.log('still twisting please wait');
-      // normalize pointer coords into NDC space
-      const { left, top, width, height } = gl.domElement.getBoundingClientRect();
-      pointer.current.x = ((event.clientX - left) / width) * 2 - 1;
-      pointer.current.y = -((event.clientY - top) / height) * 2 + 1;
+    if (gltf.scene.children.length < slices) return;
 
-      raycaster.current.setFromCamera(pointer.current, camera);
+    setWedges();
+    // const sortedChildren = gltf.scene.children.sort((a, b) => (a.name > b.name ? 1 : -1));
 
-      const hits = raycaster.current.intersectObjects(meshRefs.current);
-      if (!hits.length) return;
+    // wedges.current.clear();
+    // const indices = [0, 1, 2, 3, 4, 5, 6, 7];
 
-      const hitObj = hits[0].object;
-      const selectedWedge = hitObj.parent;
+    // indices.forEach((shuffledIndex, index) => {
+    //   const wedge = sortedChildren[index].clone(true);
+    //   wedge.userData.originalIndex = index;
 
-      const selectedWedgeIndex = meshRefs.current.findIndex((m) => m === selectedWedge);
+    //   wedge.traverse((child) => {
+    //     if (child.isMesh) {
+    //       child.castShadow = true;
+    //       child.receiveShadow = true;
+    //     }
+    //   });
 
-      const worldPos = new Vector3();
-      selectedWedge.getWorldPosition(worldPos);
-      flipGroup.current.lookAt(worldPos.x, 0, worldPos.z);
-      flipGroup.current.rotateY((Math.PI / 2) - (step / 2));
+    //   const offsetContainer = new Group();
+    //   offsetContainer.position.set(0, 0, -gap);
+    //   offsetContainer.add(wedge);
 
-      const secondWedgeIndex = (selectedWedgeIndex + 1) % slices;
-      const thirdWedgeIndex = (selectedWedgeIndex + 2) % slices;
-      const fourthWedgeIndex = (selectedWedgeIndex + 3) % slices;
+    //   const rotationContainer = new Group();
+    //   rotationContainer.rotation.y = shuffledIndex * basePhiLength;
+    //   rotationContainer.add(offsetContainer);
 
-      const slicesToFlip = [
-        selectedWedgeIndex,
-        secondWedgeIndex,
-        thirdWedgeIndex,
-        fourthWedgeIndex,
-      ];
-
-      slicesToFlip.forEach((i) => flipGroup.current.attach(meshRefs.current[i]));
-
-      twistAnimation.current = {
-        start: performance.now(),
-        lastOffset: 0,
-        distance: 0.5,
-        indices: slicesToFlip,
-        lastRot: 0,
-        direction: 'UP',
-      };
-      animateTwist();
-    };
-
-    gl.domElement.addEventListener('pointerdown', handleClick);
-    return () => gl.domElement.removeEventListener('pointerdown', handleClick);
-  }, [gl.domElement, camera, meshRefs.current, setTwistIndex]);
+    //   wedges.current.add(rotationContainer);
+    //   meshRefs.current[indices[index]] = wedge;
+    // });
+  }, [gltf]);
 
   const animateTwist = () => {
     if (!twistAnimation.current) return;
@@ -181,34 +142,87 @@ export default function Scene({ slices, twistIndex, setTwistIndex, highlight }) 
     if (easedT < 1) {
       animFrame.current = requestAnimationFrame(animateTwist);
     } else {
+      console.log('done twisting');
       twistAnimation.current.indices.forEach((i) => wedges.current.attach(meshRefs.current[i]));
-      // flipGroup.current.rotation.set(0, 0, 0);
-      // const snappedY = Math.round((rotationGroup.current.rotation.y - (step / 2)) / step) * step + (step / 2) + (Math.PI / 2);
-      // flipGroup.current.rotation.y = -snappedY;
       twistAnimation.current = null;
+      onTwistComplete();
       checkIfSolved();
     }
   };
 
+  // setup twist based on the index of the first wedge in the selection of slices / 2
+  const startTwist = (index) => {
+    console.log('twist on', index);
+    const selectedWedge = meshRefs.current[index];
+    const worldPos = new Vector3();
+    selectedWedge.getWorldPosition(worldPos);
+    flipGroup.current.lookAt(worldPos.x, 0, worldPos.z);
+    flipGroup.current.rotateY((Math.PI / 2) - (step / 2));
+    const secondWedgeIndex = (index + 1) % slices;
+    const thirdWedgeIndex = (index + 2) % slices;
+    const fourthWedgeIndex = (index + 3) % slices;
+
+    const slicesToFlip = [
+      index,
+      secondWedgeIndex,
+      thirdWedgeIndex,
+      fourthWedgeIndex,
+    ];
+
+    slicesToFlip.forEach((i) => flipGroup.current.attach(meshRefs.current[i]));
+
+    twistAnimation.current = {
+      start: performance.now(),
+      lastOffset: 0,
+      distance: 0.5,
+      indices: slicesToFlip,
+      lastRot: 0,
+      direction: Math.random() > 0.5 ? 'UP' : 'DOWN',
+    };
+    animateTwist();
+  };
+
   useEffect(() => {
-    if (highlight !== null) {
-      const mesh = meshRefs.current[highlight].children[0];
-      mesh.material = highlightMaterial.current;
-      prevHighlight.current = mesh;
-    } else if (prevHighlight.current) {
-      prevHighlight.current.material = originalMaterial.current;
+    const handleClick = (event) => {
+      if (twistAnimation.current) return console.log('still twisting please wait');
+      const { left, top, width, height } = gl.domElement.getBoundingClientRect();
+      pointer.current.x = ((event.clientX - left) / width) * 2 - 1;
+      pointer.current.y = -((event.clientY - top) / height) * 2 + 1;
+      raycaster.current.setFromCamera(pointer.current, camera);
+      const hits = raycaster.current.intersectObjects(meshRefs.current);
+      if (!hits.length) return;
+
+      const hitObj = hits[0].object;
+      const selectedWedge = hitObj.parent;
+      const selectedWedgeIndex = meshRefs.current.findIndex((m) => m === selectedWedge);
+      startTwist(selectedWedgeIndex);
+    };
+
+    gl.domElement.addEventListener('pointerdown', handleClick);
+    return () => gl.domElement.removeEventListener('pointerdown', handleClick);
+  }, [gl.domElement, camera, meshRefs.current]);
+
+  useEffect(() => {
+    if (twistIndex === null || !gltf) return;
+
+    startTwist(twistIndex);
+  }, [twistIndex, gltf]);
+
+  useEffect(() => {
+    if (reset) {
+      setWedges();
+      // wedges.current.children.forEach((container, idx) => {
+      //   container.rotation.y = idx * basePhiLength;
+      // });
+      // flipGroup.current.rotation.set(0, 0, 0);
+      // setTwistIndex(null);
+      setReset(false);
     }
-  }, [highlight]);
+  }, [reset]);
 
   return (
     <group ref={rotationGroup}>
-      <group ref={flipGroup}>
-        {/* <mesh>
-          <boxGeometry args={[2, 2, 2]} />
-          <meshBasicMaterial wireframe />
-        </mesh>
-        <arrowHelper /> */}
-      </group>
+      <group ref={flipGroup} />
       <group ref={wedges} />
     </group>
   );
