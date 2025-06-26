@@ -10,6 +10,7 @@ import './index.scss';
 
 export default function App() {
   const slices = 8;
+  const [shuffling, setShuffling] = useState(false);
   const [shuffled, setShuffled] = useState(false);
   const [twistIndex, setTwistIndex] = useState(null);
   const [webcamRunning, setWebcamRunning] = useState(false);
@@ -21,6 +22,7 @@ export default function App() {
   const startTwists = 3;
 
   const startGame = async () => {
+    setShuffling(true);
     const twist = (index) => new Promise((resolve) => {
       finishTwist.current = resolve;
       setTwistIndex(index);
@@ -38,6 +40,7 @@ export default function App() {
     }
 
     setShuffled(true);
+    setShuffling(false);
   };
 
   const restartGame = () => {
@@ -76,11 +79,11 @@ export default function App() {
         <Scene
           slices={slices}
           twistIndex={twistIndex}
-          setTwistIndex={setTwistIndex}
           onTwistComplete={() => finishTwist.current()}
           reset={reset}
           setReset={setReset}
           setCompleted={setCompleted}
+          shuffling={shuffling}
         />
         {/* </Float> */}
 

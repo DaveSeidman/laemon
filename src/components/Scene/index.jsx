@@ -1,14 +1,14 @@
 // TODO: decide between slices and wedges
 
 import React, { useRef, useEffect } from 'react';
-import { Vector3, Group, DoubleSide, Raycaster, MeshNormalMaterial, Vector2, MeshStandardMaterial, Quaternion } from 'three';
+import { Vector3, Group, Raycaster, Vector2 } from 'three';
 import { useThree } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import wedgeModel from '../../assets/models/wedges.glb';
-import { cubicEase, shuffle } from '../../utils';
+import { cubicEase } from '../../utils';
 import './index.scss';
 
-export default function Scene({ slices, twistIndex, setTwistIndex, onTwistComplete, reset, setReset, setCompleted }) {
+export default function Scene({ slices, twistIndex, onTwistComplete, reset, setReset, setCompleted, shuffling }) {
   const rotationGroup = useRef();
   const flipGroup = useRef();
   const wedges = useRef();
@@ -51,7 +51,7 @@ export default function Scene({ slices, twistIndex, setTwistIndex, onTwistComple
 
     if (isForward || isBackward) {
       console.log('🟢 Puzzle is solved!', meshOrder.current);
-      setCompleted(true);
+      if (!shuffling) setCompleted(true);
     }
   };
 
