@@ -52,6 +52,7 @@ export default function App() {
 
   return (
     <div className="app">
+      <div className="app-background" />
       <Camera
         webcamRunning={webcamRunning}
         setWebcamRunning={setWebcamRunning}

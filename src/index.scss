@@ -37,10 +37,16 @@ html, body, #root {
 .app {
   width: 100vw;
   height: 100vh;
-  background-image: url('./assets/images/background.svg');
-  background-size: 100vh 100vh;
-  background-position: top -3em center;
-  animation: drift 50s linear infinite;
+  &-background {
+    position: absolute;
+    inset: 0;
+    opacity: .1;
+
+    background-image: url('./assets/images/background.svg');
+    background-size: 100vh 100vh;
+    background-position: top -3em center;
+    animation: drift 50s linear infinite;
+  }
 }
 
 button {
