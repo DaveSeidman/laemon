@@ -9,13 +9,7 @@ const Camera = ({ setWidth, setHeight, setAudioSource, webcamRunning, setWebcamR
     stream.current = await navigator.mediaDevices.getUserMedia(constraints);
     const videoTrack = stream.current.getVideoTracks()[0];
     const { width, height } = videoTrack.getSettings();
-    // setWidth(width);
-    // setHeight(height);
     videoElementRef.current.srcObject = stream.current;
-    // TODO: this flattens out the volume bar :(
-    // videoElementRef.current.volume = 0.0;
-    // videoElementRef.current.muted = true;
-    // setAudioSource(stream.current);
     setWebcamRunning(true);
   };
 

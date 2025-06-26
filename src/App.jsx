@@ -18,6 +18,8 @@ export default function App() {
   const videoElementRef = useRef();
   const finishTwist = useRef(() => { });
 
+  const startTwists = 3;
+
   const startGame = async () => {
     const twist = (index) => new Promise((resolve) => {
       finishTwist.current = resolve;
@@ -25,7 +27,7 @@ export default function App() {
     });
 
     let last = twistIndex;
-    for (let i = 0; i < 5; i += 1) {
+    for (let i = 0; i < startTwists; i += 1) {
       let next = Math.floor(Math.random() * slices);
       while (next === last) {
         next = Math.floor(Math.random() * slices);
@@ -42,6 +44,7 @@ export default function App() {
     console.log('restart');
     setReset(true);
     setShuffled(false);
+    setCompleted(false);
   };
 
   return (
@@ -51,15 +54,17 @@ export default function App() {
         setWebcamRunning={setWebcamRunning}
         videoElementRef={videoElementRef}
       />
-      <Canvas shadows>
+      <Canvas
+        shadows
+      >
         <OrbitControls
           enableZoom={false}
           enablePan={false}
         />
         <PerspectiveCamera
           makeDefault
-          position={[0, 1.5, 12]}
-          rotation={[-0.1, 0, 0]}
+          position={[0, 1.5, 8]}
+          // rotation={[-0.1, 0, 0]}
           fov={25}
         />
         {/* <Float
@@ -80,7 +85,7 @@ export default function App() {
         {/* </Float> */}
 
         <directionalLight
-          position={[2, 4, -2]}
+          position={[4, 4, 3]}
           intensity={5}
           castShadow
           shadow-mapSize-width={1024}

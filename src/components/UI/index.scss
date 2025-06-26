@@ -1,3 +1,5 @@
+@use '../../index.scss' as src;
+
 .ui {
   position: absolute;
   inset: 0;
@@ -27,6 +29,32 @@
     left: 50%;
     transform: translateX(-50%);
     margin-bottom: 2rem;
+  }
+
+  &-result {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Plus Jakarta Sans';
+    color: src.$lightgreen;
+    transition: opacity 1s, visibility 1s;
+    pointer-events: none;
+    text-shadow: 0 5px 5px rgba(0, 0, 0, .4);
+
+    &-title {
+      transition: transform .5s;
+    }
+
+    &.hidden {
+      .ui-result {
+        &-title {
+          transition-delay: 1s;
+          transform: translateY(20px);
+        }
+      }
+    }
   }
 
 }
