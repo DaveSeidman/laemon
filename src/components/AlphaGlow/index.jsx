@@ -31,7 +31,7 @@ const fragmentShader = `
     float glowOnly = max(blurred - original, 0.0);
 
     // Darker green tint
-    vec3 glow = vec3(0.0, glowOnly * 0.05, 0.0);
+    vec3 glow = vec3(0.0, glowOnly * 0.04, glowOnly * 0.01);
 
     // Output glow fringe, preserving transparency
     outputColor = vec4(glow, glowOnly);

@@ -8,7 +8,7 @@ import wedgeModel from '../../assets/models/wedges.glb';
 import { cubicEase } from '../../utils';
 import './index.scss';
 
-export default function Scene({ slices, twistIndex, onTwistComplete, reset, setReset, setCompleted, shuffling }) {
+export default function Scene({ startFlare, setStartFlare, slices, twistIndex, onTwistComplete, reset, setReset, setCompleted, shuffling }) {
   const rotationGroup = useRef();
   const flipGroup = useRef();
   const wedges = useRef();
@@ -24,7 +24,7 @@ export default function Scene({ slices, twistIndex, onTwistComplete, reset, setR
   const startPos = useRef({ x: 0, y: 0 });
 
   const step = (Math.PI * 2) / slices;
-  const twistDuration = 500;
+  const twistDuration = 900;
   const basePhiLength = (Math.PI * 2) / slices;
   const gap = 0.01;
 
@@ -196,6 +196,80 @@ export default function Scene({ slices, twistIndex, onTwistComplete, reset, setR
       setReset(false);
     }
   }, [reset]);
+
+  const easeInOutQuad = (t) => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t);
+
+  const flare = () => {
+    const duration = 4000;
+    const maxGap = 3;
+    const minGap = 0.01;
+
+    const startTime = performance.now();
+
+    // Animate entire rotationGroup (180° spin with gentle easing)
+    const animateRotationGroup = () => {
+      const now = performance.now();
+      const t = Math.min((now - startTime) / duration, 1);
+      const eased = easeInOutQuad(t);
+      if (rotationGroup.current) {
+        rotationGroup.current.rotation.y = eased * Math.PI; // 0 → 180°
+      }
+      if (t < 1) {
+        requestAnimationFrame(animateRotationGroup);
+      } else {
+        // rotationGroup.current.rotation.y = 0; // optional reset
+      }
+    };
+    requestAnimationFrame(animateRotationGroup);
+
+    // Animate each slice (gap and X flip with cubic easing)
+    wedges.current.children.forEach((rotationContainer, index) => {
+      const offsetContainer = rotationContainer.children[0];
+      const start = performance.now() + index * 100; // staggered
+
+      const animate = () => {
+        const now = performance.now();
+        const t = (now - start) / duration;
+
+        if (t < 0) {
+          requestAnimationFrame(animate);
+          return;
+        }
+
+        const easedT = Math.min(t, 1);
+        let gap;
+        let rotation;
+
+        if (easedT < 0.5) {
+          const p = cubicEase(easedT * 2);
+          gap = minGap + (maxGap - minGap) * p;
+          rotation = Math.PI * p; // flip forward
+        } else {
+          const p = cubicEase((1 - easedT) * 2);
+          gap = minGap + (maxGap - minGap) * p;
+          rotation = Math.PI * p; // flip back
+        }
+
+        offsetContainer.position.setZ(-gap);
+        offsetContainer.rotation.x = rotation;
+
+        if (easedT < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          offsetContainer.rotation.x = 0; // reset
+        }
+      };
+
+      requestAnimationFrame(animate);
+    });
+  };
+
+  useEffect(() => {
+    if (startFlare) {
+      flare();
+      setTimeout(() => setStartFlare(false), 500 + wedges.current.children.length * 100); // staggered total time
+    }
+  }, [startFlare]);
 
   return (
     <group ref={rotationGroup}>
