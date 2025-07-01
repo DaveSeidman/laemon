@@ -26,7 +26,7 @@ export default function Scene({ slices, twistIndex, onTwistComplete, reset, setR
   const step = (Math.PI * 2) / slices;
   const twistDuration = 500;
   const basePhiLength = (Math.PI * 2) / slices;
-  const gap = 0.1;
+  const gap = 0.01;
 
   const gltf = useGLTF(wedgeModel);
   const twistAnimation = useRef(null);

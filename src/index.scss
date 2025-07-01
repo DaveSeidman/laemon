@@ -45,8 +45,6 @@ html, body, #root {
   &-background {
     position: absolute;
     inset: 0;
-    opacity: .1;
-
     background-image: url('./assets/images/background.svg');
     background-size: 100vh 100vh;
     background-position: top -3em center;
@@ -56,12 +54,13 @@ html, body, #root {
 
 button {
   background: $lightgreen;
-  border-radius: 0.5em;
+  border-radius: 2rem;
   border: none;
   box-shadow: 1px 1px 16px 0px rgba(0,0,0,0.49);
   font-family: 'Plus Jakarta Sans';
   color: white;
   font-weight: 700;
-  padding: 1rem;
+  padding: 1rem 2rem;
+  margin: 1vh;
   cursor: pointer;
 }

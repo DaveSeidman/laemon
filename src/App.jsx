@@ -4,6 +4,7 @@ import { Canvas } from '@react-three/fiber';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { Environment, MeshReflectorMaterial, PerspectiveCamera, Float, OrbitControls } from '@react-three/drei';
 import Scene from './components/Scene';
+import AlphaGlow from './components/AlphaGlow';
 import Camera from './components/Camera';
 import UI from './components/UI';
 import './index.scss';
@@ -109,6 +110,7 @@ export default function App() {
         />
 
         <EffectComposer>
+          <AlphaGlow />
           <Bloom
             intensity={1.5}
             luminanceThreshold={0.2}
@@ -120,7 +122,7 @@ export default function App() {
       <UI
         completed={completed}
         shuffled={shuffled}
-        startGame={startGame2}
+        startGame={startGame}
         restartGame={restartGame}
       />
     </div>

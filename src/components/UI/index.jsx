@@ -1,6 +1,7 @@
 import React from 'react';
 import { useWindowSize } from 'react-use';
 import Confetti from 'react-confetti';
+import logo from '../../assets/images/logo.svg';
 
 import './index.scss';
 
@@ -18,13 +19,18 @@ const UI = ({ shuffled, completed, startGame, restartGame }) => {
           Start
         </button>
       </div>
-      <button
+      <div className="ui-bottom">
+        <p className="ui-bottom-level">Level 1</p>
+        <button className="ui-bottom-buy" type="button">Buy Now!</button>
+        <img className="ui-bottom-logo" src={logo} />
+      </div>
+      {/* <button
         className={`ui-restart ${shuffled ? '' : 'hidden'}`}
         type="button"
         onClick={restartGame}
       >
         Restart
-      </button>
+      </button> */}
       <div className={`ui-result ${completed ? '' : 'hidden'}`}>
         <Confetti
           width={width}
