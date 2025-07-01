@@ -7,6 +7,17 @@ export const shuffle = (array) => {
   return result;
 };
 
-export const cubicEase = (t) =>
-  // t: 0 to 1, output value will be in the range of 0 to 1
-  (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
+export const cubicEase = (t) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
+
+export const formatDate = (date) => {
+  const day = date.getDate();
+  const month = date.getMonth() + 1; // Months are 0-indexed
+  const year = date.getFullYear();
+
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+
+  const formatted = `${day}.${month} ${year} - ${hours}:${minutes}`;
+
+  return formatted;
+};

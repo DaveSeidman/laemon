@@ -26,7 +26,7 @@ export default function Scene({ slices, twistIndex, onTwistComplete, reset, setR
   const step = (Math.PI * 2) / slices;
   const twistDuration = 500;
   const basePhiLength = (Math.PI * 2) / slices;
-  const gap = 0.01;
+  const gap = 0.1;
 
   const gltf = useGLTF(wedgeModel);
   const twistAnimation = useRef(null);
@@ -199,6 +199,14 @@ export default function Scene({ slices, twistIndex, onTwistComplete, reset, setR
 
   return (
     <group ref={rotationGroup}>
+      <mesh>
+        <sphereGeometry args={[0.33]} />
+        <meshStandardMaterial
+          metalness={0.95}
+          roughness={0.1}
+
+        />
+      </mesh>
       <group ref={flipGroup} />
       <group ref={wedges} />
     </group>

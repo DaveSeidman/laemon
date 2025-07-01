@@ -43,6 +43,10 @@ export default function App() {
     setShuffling(false);
   };
 
+  const startGame2 = () => {
+
+  };
+
   const restartGame = () => {
     console.log('restart');
     setReset(true);
@@ -53,11 +57,11 @@ export default function App() {
   return (
     <div className="app">
       <div className="app-background" />
-      <Camera
+      {/* <Camera
         webcamRunning={webcamRunning}
         setWebcamRunning={setWebcamRunning}
         videoElementRef={videoElementRef}
-      />
+      /> */}
       <Canvas
         shadows
       >
@@ -67,7 +71,7 @@ export default function App() {
         />
         <PerspectiveCamera
           makeDefault
-          position={[0, 1.5, 8]}
+          position={[0, 2.5, 8]}
           // rotation={[-0.1, 0, 0]}
           fov={25}
         />
@@ -104,21 +108,6 @@ export default function App() {
           environmentRotation={[0, 0, 0]}
         />
 
-        {/* <mesh position={[0, -1.25, 0]} rotation={[-Math.PI / 2, 0, 0]}> */}
-        {/*   <planeGeometry args={[3, 3]} /> */}
-        {/*   <MeshReflectorMaterial */}
-        {/*     blur={[1000, 1000]} */}
-        {/*     resolution={1024} */}
-        {/*     mixBlur={1} */}
-        {/*     mixStrength={100} */}
-        {/*     depthScale={0.5} */}
-        {/*     minDepthThreshold={0.5} */}
-        {/*     color={new Color('rgb(27,40,20)')} */}
-        {/*     metalness={0.99} */}
-        {/*     roughness={0.99} */}
-        {/*   /> */}
-        {/* </mesh> */}
-
         <EffectComposer>
           <Bloom
             intensity={1.5}
@@ -131,7 +120,7 @@ export default function App() {
       <UI
         completed={completed}
         shuffled={shuffled}
-        startGame={startGame}
+        startGame={startGame2}
         restartGame={restartGame}
       />
     </div>

@@ -16,9 +16,19 @@
 
     &-button {
       position: absolute;
-      top: 50%;
-      left: 50%;
+      top: 40vh;
+      left: calc(50% - 20vh);
+      width: 13vh;
+      height: 13vh;
       transform: translate(-50%, -50%);
+      font-family: 'Landa Sans';
+      font-size: 6.5vh;
+      text-align: center;
+      padding: 0;
+      // text-rendering:geometricPrecision;
+      font-weight: 100;
+      text-transform: uppercase;
+      border-radius: 50%;
     }
   }
 

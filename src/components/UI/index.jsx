@@ -1,6 +1,5 @@
 import React from 'react';
 import { useWindowSize } from 'react-use';
-
 import Confetti from 'react-confetti';
 
 import './index.scss';
@@ -16,7 +15,7 @@ const UI = ({ shuffled, completed, startGame, restartGame }) => {
           type="button"
           onClick={startGame}
         >
-          Let's Go!
+          Start
         </button>
       </div>
       <button

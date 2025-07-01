@@ -1,0 +1,32 @@
+.timer {
+  position: absolute;
+  inset: 0;
+  outline: 4px solid pink;
+  color: white;
+  font-family: 'Plus Jakarta Sans';
+  
+  &-date {
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 1rem;
+    font-size: 1rem;
+  }
+  &-recording {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 1rem;
+    color: red;
+    &:before {
+      content: '🔴 ';
+    }
+  }
+  &-time {
+    position: absolute;
+    top: 2rem;
+    left: 0;
+    margin: 1rem;
+    font-size: 2rem;
+  }
+}
