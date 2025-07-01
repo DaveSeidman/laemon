@@ -21,7 +21,14 @@ const UI = ({ shuffled, completed, startGame, restartGame }) => {
       </div>
       <div className="ui-bottom">
         <p className="ui-bottom-level">Level 1</p>
-        <button className="ui-bottom-buy" type="button">Buy Now!</button>
+        <a href="https://jogg.com/shop" target="_blank" rel="noreferrer">
+          <button
+            className="ui-bottom-buy"
+            type="button"
+          >
+            Buy Now!
+          </button>
+        </a>
         <img className="ui-bottom-logo" src={logo} />
       </div>
       {/* <button

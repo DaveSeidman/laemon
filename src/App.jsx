@@ -66,17 +66,14 @@ export default function App() {
       /> */}
       <Canvas
         shadows
-      // gl={{ precision: 'highp' }}
-
       >
         <OrbitControls
-          // enableZoom={false}
+          enableZoom={false}
           enablePan={false}
         />
         <PerspectiveCamera
           makeDefault
           position={[0, 2.5, 10]}
-          // rotation={[-0.1, 0, 0]}
           fov={25}
         />
         {/* <Float
@@ -105,17 +102,8 @@ export default function App() {
           shadow-mapSize-width={512}
           shadow-mapSize-height={512}
           shadow-bias={0.01}
-          // shadow-bias={-0.0005}
           shadow-normalBias={0.02}
-        // shadow-camera-left={-5}
-        // shadow-camera-right={5}
-        // shadow-camera-top={5}
-        // shadow-camera-bottom={-5}
-        // shadow-camera-near={1}
-        // shadow-camera-far={20}
-
         />
-        {/* <pointLight position={[-0.75, 1, -1.5]} intensity={6} /> */}
 
         <Environment
           preset="sunset"
