@@ -29,7 +29,7 @@ const UI = ({ shuffled, completed, startGame, restartGame }) => {
             Buy Now!
           </button>
         </a>
-        <img className="ui-bottom-logo" src={logo} />
+        <a href="https://jogg.com" target="_blank" rel="noreferrer"><img className="ui-bottom-logo" src={logo} /></a>
       </div>
       {/* <button
         className={`ui-restart ${shuffled ? '' : 'hidden'}`}
