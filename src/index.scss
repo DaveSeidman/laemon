@@ -1,5 +1,5 @@
 @font-face {
-  font-family: 'Plus Jakarta Sans';
+  font-family: 'Jakarta Sans';
   src: url('./assets/fonts/jakarta-sans.woff2');
 }
 
@@ -11,6 +11,7 @@
 $yellow: #FBFF79;
 $darkgreen: #1f2f24;
 $lightgreen: #B2C828;
+$white: #FFFFFF;
 
 @keyframes drift {
   0% {
@@ -42,6 +43,7 @@ html, body, #root {
 .app {
   width: 100vw;
   height: 100vh;
+  // overflow: hidden;
   &-background {
     position: absolute;
     inset: 0;
@@ -57,7 +59,7 @@ button {
   border-radius: 2rem;
   border: none;
   box-shadow: 1px 1px 16px 0px rgba(0,0,0,0.49);
-  font-family: 'Plus Jakarta Sans';
+  font-family: 'Jakarta Sans';
   color: white;
   font-weight: 700;
   padding: 1rem 2rem;

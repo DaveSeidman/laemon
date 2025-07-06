@@ -20,7 +20,7 @@
 
     &-level {
       color: white;
-      font-family: 'Plus Jakarta Sans';
+      font-family: 'Jakarta Sans';
     }
 
     &-buy {
@@ -36,25 +36,19 @@
 
   &-start {
     position: absolute;
-    inset: 0;
     transition: opacity .5s, visibility .5s;
-
-    &-button {
-      position: absolute;
-      top: 37vh;
-      left: calc(50% - 17vh);
-      width: 13vh;
-      height: 13vh;
-      transform: translate(-50%, -50%);
-      font-family: 'Landa Sans';
-      font-size: 6.5vh;
-      text-align: center;
-      padding: 0;
-      // text-rendering:geometricPrecision;
-      font-weight: 100;
-      text-transform: uppercase;
-      border-radius: 50%;
-    }
+    top: 37vh;
+    left: calc(50% - 17vh);
+    width: 13vh;
+    height: 13vh;
+    transform: translate(-50%, -50%);
+    font-family: 'Landa Sans';
+    font-size: 6.5vh;
+    text-align: center;
+    padding: 0;
+    font-weight: 100;
+    text-transform: uppercase;
+    border-radius: 50%;
   }
 
   &-restart {
@@ -72,7 +66,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    font-family: 'Plus Jakarta Sans';
+    font-family: 'Jakarta Sans';
     color: src.$lightgreen;
     transition: opacity 1s, visibility 1s;
     pointer-events: none;

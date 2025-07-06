@@ -1,5 +1,4 @@
 import React, { useRef } from 'react';
-import Timer from './Timer';
 import './index.scss';
 
 const Camera = ({ setWidth, setHeight, setAudioSource, webcamRunning, setWebcamRunning, videoElementRef }) => {
@@ -24,8 +23,6 @@ const Camera = ({ setWidth, setHeight, setAudioSource, webcamRunning, setWebcamR
           playsInline
           muted
         />
-
-        <Timer />
       </div>
       <button
         className={`camera-start ${!webcamRunning ? '' : 'hidden'}`}

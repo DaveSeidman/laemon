@@ -13,6 +13,7 @@ export default function App() {
   const slices = 8;
   const [shuffling, setShuffling] = useState(false);
   const [shuffled, setShuffled] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const [twistIndex, setTwistIndex] = useState(null);
   const [webcamRunning, setWebcamRunning] = useState(false);
   const [reset, setReset] = useState(false);
@@ -43,6 +44,7 @@ export default function App() {
 
     setShuffled(true);
     setShuffling(false);
+    setPlaying(true);
   };
 
   const startGame2 = () => {
@@ -124,9 +126,11 @@ export default function App() {
 
       <UI
         completed={completed}
+        shuffling={shuffling}
         shuffled={shuffled}
         startGame={startGame}
         restartGame={restartGame}
+        playing={playing}
       />
 
       <button style={{ position: 'absolute', bottom: 0, left: 0, padding: '.5rem' }} type="button" onClick={() => setStartFlare(true)}>Flare Animation</button>
