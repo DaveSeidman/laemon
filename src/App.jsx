@@ -16,7 +16,7 @@ export default function App() {
   const videoElementRef = useRef();
   const finishTwist = useRef(() => { });
 
-  const startTwists = 1;
+  const startTwists = 3;
 
   const startGame = async () => {
     setShuffling(true);
