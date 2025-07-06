@@ -9,33 +9,39 @@
     pointer-events: all;
   }
 
-  &-bottom {
+  &-logo {
     position: absolute;
-    bottom: 0;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    bottom: 1rem;
+    height: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
 
-    &-level {
-      color: white;
-      font-family: 'Jakarta Sans';
+    img {
+      width: 14vh;
     }
+  }
 
-    &-buy {
-      text-transform: uppercase;
-      letter-spacing: .1rem;
-    }
-    
-    &-logo {
-      width: 6rem;
-      margin: 1rem;
-    }
+  &-level {
+    position: absolute;
+    bottom: 3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    color: src.$white;
+    font-family: 'Jakarta Sans';
+  }
+
+  &-buy {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    z-index: 2;
+
   }
 
   &-start {
     position: absolute;
+    z-index: 2;
     transition: opacity .5s, visibility .5s;
     top: 37vh;
     left: calc(50% - 17vh);

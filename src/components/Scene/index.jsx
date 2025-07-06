@@ -1,14 +1,24 @@
-// TODO: decide between slices and wedges
-
 import React, { useRef, useEffect } from 'react';
-import { Vector3, Group, Raycaster, Vector2 } from 'three';
-import { useThree } from '@react-three/fiber';
-import { useGLTF } from '@react-three/drei';
+import { Canvas, useThree } from '@react-three/fiber';
+import { Environment, PerspectiveCamera, OrbitControls, useGLTF } from '@react-three/drei';
+import { EffectComposer, Bloom } from '@react-three/postprocessing';
+import { Group, Raycaster, Vector2, Vector3 } from 'three';
+import AlphaGlow from './AlphaGlow';
 import wedgeModel from '../../assets/models/wedges.glb';
 import { cubicEase } from '../../utils';
 import './index.scss';
 
-export default function Scene({ startFlare, setStartFlare, slices, twistIndex, onTwistComplete, reset, setReset, setCompleted, shuffling }) {
+function PuzzleScene({
+  slices,
+  twistIndex,
+  onTwistComplete,
+  reset,
+  setReset,
+  setCompleted,
+  shuffling,
+  startFlare,
+  setStartFlare,
+}) {
   const rotationGroup = useRef();
   const flipGroup = useRef();
   const wedges = useRef();
@@ -19,7 +29,6 @@ export default function Scene({ startFlare, setStartFlare, slices, twistIndex, o
   const raycaster = useRef(new Raycaster());
   const pointer = useRef(new Vector2());
 
-  // Track pointer movement to differentiate click vs drag
   const isDragging = useRef(false);
   const startPos = useRef({ x: 0, y: 0 });
 
@@ -31,29 +40,6 @@ export default function Scene({ startFlare, setStartFlare, slices, twistIndex, o
   const gltf = useGLTF(wedgeModel);
   const twistAnimation = useRef(null);
   const animFrame = useRef();
-
-  const checkIfSolved = () => {
-    const entries = meshRefs.current.map((mesh) => {
-      const v = new Vector3();
-      mesh.getWorldPosition(v);
-      const rawAngle = Math.atan2(v.z, v.x);
-      const angle = (rawAngle + (Math.PI / 2) + (2 * Math.PI)) % (2 * Math.PI);
-      return { mesh, angle, originalIndex: mesh.userData.originalIndex };
-    });
-
-    entries.sort((a, b) => b.angle - a.angle);
-    meshRefs.current = entries.map((e) => e.mesh);
-    meshOrder.current = entries.map((e) => e.originalIndex);
-
-    const diffs = meshOrder.current.slice(1).map((v, i) => (v - meshOrder.current[i] + slices) % slices);
-    const isForward = diffs.every((d) => d === 1);
-    const isBackward = diffs.every((d) => d === slices - 1);
-
-    if (isForward || isBackward) {
-      console.log('🟢 Puzzle is solved!', meshOrder.current);
-      if (!shuffling) setCompleted(true);
-    }
-  };
 
   const setWedges = () => {
     const sortedChildren = gltf.scene.children.sort((a, b) => (a.name > b.name ? 1 : -1));
@@ -83,10 +69,28 @@ export default function Scene({ startFlare, setStartFlare, slices, twistIndex, o
     });
   };
 
-  useEffect(() => {
-    if (gltf.scene.children.length < slices) return;
-    setWedges();
-  }, [gltf]);
+  const checkIfSolved = () => {
+    const entries = meshRefs.current.map((mesh) => {
+      const v = new Vector3();
+      mesh.getWorldPosition(v);
+      const rawAngle = Math.atan2(v.z, v.x);
+      const angle = (rawAngle + (Math.PI / 2) + (2 * Math.PI)) % (2 * Math.PI);
+      return { mesh, angle, originalIndex: mesh.userData.originalIndex };
+    });
+
+    entries.sort((a, b) => b.angle - a.angle);
+    meshRefs.current = entries.map((e) => e.mesh);
+    meshOrder.current = entries.map((e) => e.originalIndex);
+
+    const diffs = meshOrder.current.slice(1).map((v, i) => (v - meshOrder.current[i] + slices) % slices);
+    const isForward = diffs.every((d) => d === 1);
+    const isBackward = diffs.every((d) => d === slices - 1);
+
+    if (isForward || isBackward) {
+      console.log('🟢 Puzzle is solved!', meshOrder.current);
+      if (!shuffling) setCompleted(true);
+    }
+  };
 
   const animateTwist = () => {
     if (!twistAnimation.current) return;
@@ -138,7 +142,6 @@ export default function Scene({ startFlare, setStartFlare, slices, twistIndex, o
     animateTwist();
   };
 
-  // Handle pointer events instead of click
   const handlePointerClick = (event) => {
     const { left, top, width, height } = gl.domElement.getBoundingClientRect();
     pointer.current.x = ((event.clientX - left) / width) * 2 - 1;
@@ -186,6 +189,11 @@ export default function Scene({ startFlare, setStartFlare, slices, twistIndex, o
   }, [gl.domElement, camera, meshRefs.current]);
 
   useEffect(() => {
+    if (gltf.scene.children.length < slices) return;
+    setWedges();
+  }, [gltf]);
+
+  useEffect(() => {
     if (twistIndex === null || !gltf) return;
     startTwist(twistIndex);
   }, [twistIndex, gltf]);
@@ -203,29 +211,24 @@ export default function Scene({ startFlare, setStartFlare, slices, twistIndex, o
     const duration = 4000;
     const maxGap = 3;
     const minGap = 0.01;
-
     const startTime = performance.now();
 
-    // Animate entire rotationGroup (180° spin with gentle easing)
     const animateRotationGroup = () => {
       const now = performance.now();
       const t = Math.min((now - startTime) / duration, 1);
       const eased = easeInOutQuad(t);
       if (rotationGroup.current) {
-        rotationGroup.current.rotation.y = eased * Math.PI; // 0 → 180°
+        rotationGroup.current.rotation.y = eased * Math.PI;
       }
       if (t < 1) {
         requestAnimationFrame(animateRotationGroup);
-      } else {
-        // rotationGroup.current.rotation.y = 0; // optional reset
       }
     };
     requestAnimationFrame(animateRotationGroup);
 
-    // Animate each slice (gap and X flip with cubic easing)
     wedges.current.children.forEach((rotationContainer, index) => {
       const offsetContainer = rotationContainer.children[0];
-      const start = performance.now() + index * 100; // staggered
+      const start = performance.now() + index * 100;
 
       const animate = () => {
         const now = performance.now();
@@ -243,11 +246,11 @@ export default function Scene({ startFlare, setStartFlare, slices, twistIndex, o
         if (easedT < 0.5) {
           const p = cubicEase(easedT * 2);
           gap = minGap + (maxGap - minGap) * p;
-          rotation = Math.PI * p; // flip forward
+          rotation = Math.PI * p;
         } else {
           const p = cubicEase((1 - easedT) * 2);
           gap = minGap + (maxGap - minGap) * p;
-          rotation = Math.PI * p; // flip back
+          rotation = Math.PI * p;
         }
 
         offsetContainer.position.setZ(-gap);
@@ -256,7 +259,7 @@ export default function Scene({ startFlare, setStartFlare, slices, twistIndex, o
         if (easedT < 1) {
           requestAnimationFrame(animate);
         } else {
-          offsetContainer.rotation.x = 0; // reset
+          offsetContainer.rotation.x = 0;
         }
       };
 
@@ -267,22 +270,50 @@ export default function Scene({ startFlare, setStartFlare, slices, twistIndex, o
   useEffect(() => {
     if (startFlare) {
       flare();
-      setTimeout(() => setStartFlare(false), 500 + wedges.current.children.length * 100); // staggered total time
+      setTimeout(() => setStartFlare(false), 500 + wedges.current.children.length * 100);
     }
   }, [startFlare]);
 
   return (
-    <group ref={rotationGroup}>
-      <mesh>
-        <sphereGeometry args={[0.33]} />
-        <meshStandardMaterial
-          metalness={0.95}
-          roughness={0.1}
+    <>
+      <OrbitControls enableZoom={false} enablePan={false} />
+      <PerspectiveCamera makeDefault position={[0, 2.5, 10]} fov={25} />
 
-        />
-      </mesh>
-      <group ref={flipGroup} />
-      <group ref={wedges} />
-    </group>
+      <group ref={rotationGroup}>
+        <mesh>
+          <sphereGeometry args={[0.33]} />
+          <meshStandardMaterial metalness={0.95} roughness={0.1} />
+        </mesh>
+        <group ref={flipGroup} />
+        <group ref={wedges} />
+      </group>
+
+      <directionalLight
+        position={[4, 4, 3]}
+        intensity={5}
+        castShadow
+        shadow-mapSize-width={512}
+        shadow-mapSize-height={512}
+        shadow-bias={0.01}
+        shadow-normalBias={0.02}
+      />
+
+      <Environment preset="sunset" blur={0.05} intensity={2} environmentRotation={[0, 0, 0]} />
+
+      <EffectComposer>
+        <AlphaGlow />
+        <Bloom intensity={1.5} luminanceThreshold={0.2} luminanceSmoothing={1} />
+      </EffectComposer>
+    </>
+  );
+}
+
+export default function Scene(props) {
+  return (
+    <div className="scene">
+      <Canvas shadows>
+        <PuzzleScene {...props} />
+      </Canvas>
+    </div>
   );
 }

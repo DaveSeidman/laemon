@@ -1,11 +1,5 @@
-// src/App.jsx
-import React, { useState, useRef } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { EffectComposer, Bloom } from '@react-three/postprocessing';
-import { Environment, MeshReflectorMaterial, PerspectiveCamera, Float, OrbitControls } from '@react-three/drei';
+import React, { useState, useEffect, useRef } from 'react';
 import Scene from './components/Scene';
-import AlphaGlow from './components/AlphaGlow';
-import Camera from './components/Camera';
 import UI from './components/UI';
 import './index.scss';
 
@@ -18,14 +12,15 @@ export default function App() {
   const [webcamRunning, setWebcamRunning] = useState(false);
   const [reset, setReset] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [startFlare, setStartFlare] = useState(false);
   const videoElementRef = useRef();
   const finishTwist = useRef(() => { });
-  const [startFlare, setStartFlare] = useState(false);
 
-  const startTwists = 3;
+  const startTwists = 1;
 
   const startGame = async () => {
     setShuffling(true);
+    setCompleted(false);
     const twist = (index) => new Promise((resolve) => {
       finishTwist.current = resolve;
       setTwistIndex(index);
@@ -47,10 +42,6 @@ export default function App() {
     setPlaying(true);
   };
 
-  const startGame2 = () => {
-    setStartFlare(true);
-  };
-
   const restartGame = () => {
     console.log('restart');
     setReset(true);
@@ -58,72 +49,26 @@ export default function App() {
     setCompleted(false);
   };
 
+  useEffect(() => {
+    if (completed) {
+      setPlaying(false);
+    }
+  }, [completed]);
+
   return (
     <div className="app">
       <div className="app-background" />
-      {/* <Camera
-        webcamRunning={webcamRunning}
-        setWebcamRunning={setWebcamRunning}
-        videoElementRef={videoElementRef}
-      /> */}
-      <Canvas
-        shadows
-      >
-        <OrbitControls
-          enableZoom={false}
-          enablePan={false}
-        />
-        <PerspectiveCamera
-          makeDefault
-          position={[0, 2.5, 10]}
-          fov={25}
-        />
-        {/* <Float
-          speed={3}
-          rotationIntensity={1}
-          floatIntensity={1}
-          floatingRange={[-0.1, 0.1]}
-        > */}
-        <Scene
-          slices={slices}
-          twistIndex={twistIndex}
-          onTwistComplete={() => finishTwist.current()}
-          reset={reset}
-          setReset={setReset}
-          setCompleted={setCompleted}
-          shuffling={shuffling}
-          startFlare={startFlare}
-          setStartFlare={setStartFlare}
-        />
-        {/* </Float> */}
-
-        <directionalLight
-          position={[4, 4, 3]}
-          intensity={5}
-          castShadow
-          shadow-mapSize-width={512}
-          shadow-mapSize-height={512}
-          shadow-bias={0.01}
-          shadow-normalBias={0.02}
-        />
-
-        <Environment
-          preset="sunset"
-          blur={0.05}
-          intensity={2}
-          environmentRotation={[0, 0, 0]}
-        />
-
-        <EffectComposer>
-          <AlphaGlow />
-          <Bloom
-            intensity={1.5}
-            luminanceThreshold={0.2}
-            luminanceSmoothing={1}
-          />
-        </EffectComposer>
-      </Canvas>
-
+      <Scene
+        slices={slices}
+        twistIndex={twistIndex}
+        onTwistComplete={() => finishTwist.current()}
+        reset={reset}
+        setReset={setReset}
+        setCompleted={setCompleted}
+        shuffling={shuffling}
+        startFlare={startFlare}
+        setStartFlare={setStartFlare}
+      />
       <UI
         completed={completed}
         shuffling={shuffling}
@@ -131,9 +76,16 @@ export default function App() {
         startGame={startGame}
         restartGame={restartGame}
         playing={playing}
+        webcamRunning={webcamRunning}
+        setWebcamRunning={setWebcamRunning}
       />
-
-      <button style={{ position: 'absolute', bottom: 0, left: 0, padding: '.5rem' }} type="button" onClick={() => setStartFlare(true)}>Flare Animation</button>
+      <button
+        style={{ position: 'absolute', bottom: 0, left: 0, padding: '.5rem', zIndex: 2 }}
+        type="button"
+        onClick={() => setStartFlare(true)}
+      >
+        Flare Animation
+      </button>
     </div>
   );
 }
