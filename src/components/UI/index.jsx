@@ -17,7 +17,7 @@ const UI = ({ shuffled, shuffling, completed, startGame, restartGame, playing, w
         type="button"
         onClick={startGame}
       >
-        {completed ? 'Restart' : 'Start'}
+        Start
       </button>
       <p className="ui-level">Level 1</p>
       <a href="https://jogg.com/shop" target="_blank" rel="noreferrer">

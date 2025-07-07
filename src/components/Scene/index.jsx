@@ -18,6 +18,7 @@ function PuzzleScene({
   shuffling,
   startFlare,
   setStartFlare,
+  playing,
 }) {
   const rotationGroup = useRef();
   const flipGroup = useRef();
@@ -143,6 +144,7 @@ function PuzzleScene({
   };
 
   const handlePointerClick = (event) => {
+    if (!playing) return;
     const { left, top, width, height } = gl.domElement.getBoundingClientRect();
     pointer.current.x = ((event.clientX - left) / width) * 2 - 1;
     pointer.current.y = -((event.clientY - top) / height) * 2 + 1;
@@ -298,7 +300,12 @@ function PuzzleScene({
         shadow-normalBias={0.02}
       />
 
-      <Environment preset="sunset" blur={0.05} intensity={2} environmentRotation={[0, 0, 0]} />
+      <Environment
+        preset="sunset"
+        blur={0.05}
+        intensity={2}
+        environmentRotation={[0, 0.5, 0]}
+      />
 
       <EffectComposer>
         <AlphaGlow />

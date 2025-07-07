@@ -52,6 +52,15 @@ html, body, #root {
     background-position: top -3em center;
     animation: drift 50s linear infinite;
   }
+
+  .restart {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    margin: 1rem;
+    z-index: 2;
+    transition: opacity .5s, visibility .5s;
+  }
 }
 
 button {
@@ -62,7 +71,7 @@ button {
   font-family: 'Jakarta Sans';
   color: white;
   font-weight: 700;
-  padding: 1rem 2rem;
+  padding: .5rem 1rem;
   margin: 1vh;
   cursor: pointer;
 }

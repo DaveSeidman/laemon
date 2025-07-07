@@ -47,6 +47,7 @@ export default function App() {
     setReset(true);
     setShuffled(false);
     setCompleted(false);
+    setPlaying(false);
   };
 
   useEffect(() => {
@@ -59,6 +60,7 @@ export default function App() {
     <div className="app">
       <div className="app-background" />
       <Scene
+        playing={playing}
         slices={slices}
         twistIndex={twistIndex}
         onTwistComplete={() => finishTwist.current()}
@@ -80,7 +82,15 @@ export default function App() {
         setWebcamRunning={setWebcamRunning}
       />
       <button
-        style={{ position: 'absolute', bottom: 0, left: 0, padding: '.5rem', zIndex: 2 }}
+        type="button"
+        onClick={restartGame}
+        className={`restart ${playing ? '' : 'hidden'}`}
+      >
+        Restart
+      </button>
+
+      <button
+        style={{ display: 'none', position: 'absolute', bottom: 0, left: 0, padding: '.5rem', zIndex: 2 }}
         type="button"
         onClick={() => setStartFlare(true)}
       >
